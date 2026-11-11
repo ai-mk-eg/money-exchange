@@ -568,7 +568,7 @@ function newTx(type){
   sh.oninput=e=>{if(!['xRate'].includes(e.target.id))updTx()};
   sh.onkeydown=e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();saveTx()}};
   $('#xSave').onclick=saveTx;
-  updTx();setTimeout(()=>$('#xb100').focus(),60);
+  updTx();setTimeout(()=>$('#xb100')?.focus(),60);
 }
 function calcTx(){
   const bills={};DEN.forEach(d=>bills[d]=parseInt($('#xb'+d).value)||0);
@@ -634,7 +634,6 @@ function printTx(id){
 function doPrint(h){$('#print').innerHTML=h;window.print()}
 
 /* ===================================================== rates */
-let official=null;
 function rateSheet(){
   sheet('أسعار النهارده',`
     <div class="lbl">بنشتري الدولار بـ (لما العميل يبيع)</div>
@@ -643,16 +642,13 @@ function rateSheet(){
     <div class="ratein" style="gap:8px"><button type="button" class="btn" data-rr="sell" data-v="-0.05" style="width:56px;height:56px">−</button><input id="rS" type="number" step="0.01" inputmode="decimal" class="n" value="${S.settings.sell}" style="height:56px;font-size:26px"><button type="button" class="btn" data-rr="sell" data-v="0.05" style="width:56px;height:56px">+</button></div>
     <div class="official" id="rInfo"></div>
     <button class="btn primary xl" id="rSave" style="margin-top:16px">${ic('check')}حفظ الأسعار</button>`);
-  const info=()=>{const b=num($('#rB').value),s=num($('#rS').value);$('#rInfo').innerHTML=`الفرق: <b class="n">${fmt(s-b)}</b> ج في كل دولار${official?` · السعر الرسمي في البنوك: <b class="n">${fmt(official)}</b>`:''}`};
+  const info=()=>{const b=num($('#rB').value),s=num($('#rS').value);$('#rInfo').innerHTML=`الفرق: <b class="n">${fmt(s-b)}</b> ج في كل دولار`};
   $$('[data-rr]').forEach(b=>b.onclick=()=>{const i=$(b.dataset.rr==='buy'?'#rB':'#rS');i.value=r2(num(i.value)+ +b.dataset.v);info()});
   $('#sheet').oninput=info;info();
   $('#rSave').onclick=()=>{const b=num($('#rB').value),s=num($('#rS').value);if(b<=0||s<=0)return toast('اكتب السعرين');
     if(s<b&&!confirm('سعر البيع أقل من سعر الشراء — هتخسر. متأكد؟'))return;
     if(b!==S.settings.buy||s!==S.settings.sell)S.rateLog.push({t:Date.now(),buy:b,sell:s});
     S.settings.buy=b;S.settings.sell=s;save();closeSheet();render();toast('الأسعار اتحفظت')};
-}
-async function loadOfficial(){
-  try{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();if(j&&j.rates&&j.rates.EGP){official=j.rates.EGP;render()}}catch(e){}
 }
 
 /* ===================================================== calculator */
@@ -668,7 +664,7 @@ function calcSheet(){
     $('#cB').textContent=dir==='u2e'?E(a*S.settings.buy):U(S.settings.buy?a/S.settings.buy:0);
     $('#cS').textContent=dir==='u2e'?E(a*S.settings.sell):U(S.settings.sell?a/S.settings.sell:0)};
   $$('#cDir button').forEach(b=>b.onclick=()=>{dir=b.dataset.d;$$('#cDir button').forEach(x=>x.classList.toggle('on',x===b));up()});
-  $('#cAmt').oninput=up;setTimeout(()=>$('#cAmt').focus(),60);
+  $('#cAmt').oninput=up;setTimeout(()=>$('#cAmt')?.focus(),60);
 }
 
 /* ===================================================== cash moves */
@@ -690,7 +686,7 @@ function cashSheet(sub){
   $$('#mQuick button').forEach(b=>b.onclick=()=>{$('#mNote').value=b.textContent;$$('#mQuick button').forEach(x=>x.classList.toggle('on',x===b))});
   $('#mSave').onclick=()=>{const a=r2(num($('#mAmt').value));if(a<=0)return toast('اكتب المبلغ');
     S.shift.tx.push({id:uid(),t:Date.now(),type:'cash',sub,cur,amount:a,note:$('#mNote').value.trim()});save();closeSheet();render();toast('اتسجل')};
-  setTimeout(()=>$('#mAmt').focus(),60);
+  setTimeout(()=>$('#mAmt')?.focus(),60);
 }
 
 /* ===================================================== shift */
@@ -817,7 +813,6 @@ function render(){
       if(st.low&&s.usd<st.low)al.push(`<div class="alert bad">${ic('alert')}الدولار في البيت قليل: <b class="n">${U(s.usd)}</b></div>`);
       if(s.usd<0)al.push(`<div class="alert bad">${ic('alert')}الدولار بالسالب — راجع العمليات</div>`);
       if(s.egp<0)al.push(`<div class="alert bad">${ic('alert')}المصري بالسالب — راجع العمليات</div>`);
-      if(official&&(st.buy>official*1.03||st.sell<official*0.97))al.push(`<div class="alert warn">${ic('globe')}أسعارك بعيدة عن السعر الرسمي (${fmt(official)}) — اتأكد منها<button data-rate>عدّل</button></div>`);
       const days=S.lastBackup?(Date.now()-S.lastBackup)/864e5:99;
       if(days>3&&allTx().length>5)al.push(`<div class="alert warn">${ic('download')}بقالك ${S.lastBackup?Math.floor(days)+' يوم':'فترة'} من غير نسخة احتياطية<button onclick="backup()">نزّل دلوقتي</button></div>`);
       if(open.length)al.push(`<div class="alert warn">${ic('users')}فيه ${open.length} عميل ليهم أو عليهم متبقي<button data-go="cust">شوف</button></div>`);
@@ -825,7 +820,7 @@ function render(){
       const last=sh.tx.slice(-6).reverse().map(t=>Object.assign({},t,{profit:s.p[t.id]}));
       $('#hList').innerHTML=last.map(t=>txRow(t)).join('')||`<div class="empty">${ic('list')}لسه مفيش عمليات النهارده<br>دوس على "استلمت دولار" أو "سلّمت دولار"</div>`;
       const kv=(a,b,c='')=>`<div class="kv"><span>${a}</span><b class="n ${c}">${b}</b></div>`;
-      $('#hSum').innerHTML=kv('أول الوردية',U(sh.open.usd)+' + '+E(sh.open.egp))+kv('استلمت دولار',U(s.buyUsd))+kv('دفعت مصري',E(s.buyEgp),'neg')+kv('سلّمت دولار',U(s.sellUsd))+kv('استلمت مصري',E(s.sellEgp),'pos')+(s.expEgp?kv('مصروفات',E(s.expEgp),'neg'):'')+kv('عدد الورق',s.bills)+`<div class="official">${ic('globe','width:16px')}${official?`السعر الرسمي: <b class="n">${fmt(official)}</b>`:'السعر الرسمي مش متاح (محتاج نت)'}</div>`;
+      $('#hSum').innerHTML=kv('أول الوردية',U(sh.open.usd)+' + '+E(sh.open.egp))+kv('استلمت دولار',U(s.buyUsd))+kv('دفعت مصري',E(s.buyEgp),'neg')+kv('سلّمت دولار',U(s.sellUsd))+kv('استلمت مصري',E(s.sellEgp),'pos')+(s.expEgp?kv('مصروفات',E(s.expEgp),'neg'):'')+kv('عدد الورق',s.bills);
     }
   }
   if(view==='ops'){
@@ -895,7 +890,7 @@ $('#lForgot').onclick=()=>{alert('مفيش طريقة ترجع بيها البا
 /* ===================================================== boot */
 if(S.settings.dark)document.documentElement.dataset.theme='dark';
 if(!S.rateLog.length)S.rateLog.push({t:Date.now(),buy:S.settings.buy,sell:S.settings.sell});
-setupLock();render();loadOfficial();
+setupLock();render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
