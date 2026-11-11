@@ -97,7 +97,17 @@ html,body{overflow-x:hidden}
 .bigact b{font-size:21px;display:block}
 .bigact small{opacity:.9;font-size:14px}
 @media (max-width:600px){.bigact{flex-direction:column;align-items:flex-start;padding:16px;gap:10px}.bigact b{font-size:18px}.bigact small{font-size:12px}.bigact .ic{width:46px;height:46px}}
-.minacts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.minacts{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+@media (max-width:860px){.minacts{grid-template-columns:repeat(4,1fr)}}
+.minact.quick{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.capital{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px;align-items:center}
+.capital .big small{color:var(--muted);font-size:13px}
+.capital .big b{display:block;font-size:22px}
+.capital .part{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ink2)}
+.capital .part b{display:block;font-size:15px;color:var(--ink)}
+@media (max-width:860px){.capital{grid-template-columns:1fr 1fr}.capital .big{grid-column:1/-1}}
+.timechip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);background:var(--soft);border-radius:30px;padding:6px 12px;margin-top:12px}
+.timechip input{width:auto;padding:2px 6px;border-radius:8px;font-size:14px}
 .minact{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink2)}
 .minact.danger{color:var(--bad)}
 
@@ -267,6 +277,7 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
     <a data-v="home" class="on"><svg class="i"><use href="#i-home"/></svg>الرئيسية</a>
     <a data-v="ops"><svg class="i"><use href="#i-list"/></svg>العمليات</a>
     <a data-v="cust"><svg class="i"><use href="#i-users"/></svg>العملاء<span class="cnt hidden" id="debtCnt"></span></a>
+    <a data-v="away"><svg class="i"><use href="#i-out"/></svg>فلوس بره<span class="cnt hidden" id="awayCnt"></span></a>
     <a data-v="rep"><svg class="i"><use href="#i-chart"/></svg>التقارير</a>
     <a data-v="set"><svg class="i"><use href="#i-gear"/></svg>الإعدادات</a>
     <div class="grow"></div>
@@ -305,9 +316,12 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
           <button class="bigact sell" data-new="sell"><div class="ic"><svg class="i"><use href="#i-up"/></svg></div><div><b>سلّمت دولار</b><small>العميل بيشتري — أنا بستلم مصري</small></div></button>
         </div>
         <div class="minacts">
+          <button class="minact quick" id="aQuick"><svg class="i"><use href="#i-bolt"/></svg>سجّل بسرعة</button>
           <button class="minact" id="aExp"><svg class="i"><use href="#i-receipt"/></svg>مصروف</button>
-          <button class="minact" id="aCalc"><svg class="i"><use href="#i-calc"/></svg>حاسبة</button>
+          <button class="minact" id="aAway"><svg class="i"><use href="#i-out"/></svg>فلوس بره</button>
+          <button class="minact" id="aCount"><svg class="i"><use href="#i-scale"/></svg>جرد سريع</button>
           <button class="minact" id="aMove"><svg class="i"><use href="#i-wallet"/></svg>فلوس البيت</button>
+          <button class="minact" id="aCalc"><svg class="i"><use href="#i-calc"/></svg>حاسبة</button>
           <button class="minact danger" id="aClose"><svg class="i"><use href="#i-lock"/></svg>قفل الوردية</button>
         </div>
         <div class="grid4">
@@ -316,6 +330,7 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
           <div class="card kpi"><small><svg class="i" style="width:16px"><use href="#i-trend"/></svg>ربح الوردية</small><b class="n" id="kProfit">0</b></div>
           <div class="card kpi"><small><svg class="i" style="width:16px"><use href="#i-list"/></svg>عمليات النهارده</small><b class="n" id="kCount">0</b></div>
         </div>
+        <div class="card capital" id="capital"></div>
         <div class="cols">
           <div class="card"><h3 style="display:flex">آخر العمليات<a class="linkbtn" style="margin:0 auto 0 0;cursor:pointer" data-go="ops">عرض الكل</a></h3><div id="hList"></div></div>
           <div class="card"><h3>حركة الوردية</h3><div id="hSum"></div></div>
@@ -328,13 +343,24 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
       <div class="card">
         <input id="opsQ" placeholder="دوّر باسم عميل أو مبلغ..." style="margin-bottom:12px">
         <div class="chips" id="opsF" style="margin-bottom:8px">
-          <button class="chip on" data-f="">الكل</button><button class="chip" data-f="buy">استلمت دولار</button><button class="chip" data-f="sell">سلّمت دولار</button><button class="chip" data-f="cash">مصروفات</button><button class="chip" data-f="settle">تسديدات</button>
+          <button class="chip on" data-f="">الكل</button><button class="chip" data-f="buy">استلمت دولار</button><button class="chip" data-f="sell">سلّمت دولار</button><button class="chip" data-f="cash">مصروفات</button><button class="chip" data-f="settle">تسديدات</button><button class="chip" data-f="away">فلوس بره</button>
         </div>
         <div class="chips" id="opsR" style="margin-bottom:6px">
           <button class="chip on" data-r="shift">الوردية الحالية</button><button class="chip" data-r="7">آخر 7 أيام</button><button class="chip" data-r="all">كل العمليات</button>
         </div>
         <div id="opsList"></div>
       </div>
+    </section>
+
+    <!-- ================= AWAY ================= -->
+    <section data-view="away" class="hidden">
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card kpi"><small>دولار بره البيت</small><b class="n" id="awUsd">$0</b></div>
+        <div class="card kpi"><small>مصري بره البيت</small><b class="n" id="awEgp">0</b></div>
+      </div>
+      <button class="btn primary xl" id="awAdd" style="margin-bottom:16px"><svg class="i"><use href="#i-plus"/></svg>سجّل فلوس سايبها بره</button>
+      <div class="card"><h3>فلوس لسه بره</h3><div id="awList"></div></div>
+      <details class="card" style="margin-top:16px"><summary style="font-weight:600;cursor:pointer">اللي رجع</summary><div id="awDone"></div></details>
     </section>
 
     <!-- ================= CUSTOMERS ================= -->
@@ -380,6 +406,13 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
             <button class="btn" id="csvBtn"><svg class="i"><use href="#i-sheet"/></svg>نزّل Excel</button>
           </div>
           <input type="file" id="rsFile" accept=".json" class="hidden">
+        </div>
+        <div class="card">
+          <h3>التنبيهات</h3>
+          <div style="color:var(--muted);font-size:14px;margin-bottom:12px">التنبيهات بتوصلك انت بس على الجهاز ده، ومحدش من العملاء بيوصله حاجة. بتظهر وانت فاتح البرنامج، وكمان كإشعار على الموبايل لو البرنامج مفتوح في الخلفية.</div>
+          <div class="lbl" style="margin-top:0">نبّهني لو عدّى من غير ما أسجل أي حاجة (بالساعات)</div>
+          <input id="sIdle" type="number" class="n" inputmode="decimal" placeholder="2">
+          <button class="btn" id="notifBtn" style="margin-top:12px"><svg class="i"><use href="#i-bell"/></svg><span>فعّل الإشعارات على الجهاز ده</span></button>
         </div>
         <div class="card">
           <h3>الحساب</h3>
@@ -433,6 +466,11 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5M3 12h11M9 7l-5 5 5 5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
 </svg>
 
@@ -454,7 +492,7 @@ const dLong=t=>new Date(t).toLocaleDateString('ar-EG',{weekday:'long',day:'numer
 const dayStart=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
 function ago(t){const m=Math.round((Date.now()-t)/6e4);if(m<1)return 'دلوقتي';if(m<60)return `من ${m} دقيقة`;const h=Math.round(m/60);if(h<24)return `من ${h} ساعة`;return dShort(t)}
 
-function defaults(){return{settings:{shop:'صرافة',phone:'',buy:50,sell:50.5,low:0,dark:false},shift:null,history:[],debts:[],rateLog:[],lastBackup:0}}
+function defaults(){return{settings:{shop:'صرافة',phone:'',buy:50,sell:50.5,low:0,dark:false,idle:2},shift:null,history:[],debts:[],rateLog:[],lastBackup:0,away:[],drafts:[],notified:{}}}
 let S=(()=>{try{const r=JSON.parse(localStorage.getItem(KEY));if(r){const d=defaults();return Object.assign(d,r,{settings:Object.assign(d.settings,r.settings||{})})}}catch(e){}return defaults()})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('مش قادر أحفظ — نزّل نسخة احتياطية')}}
 
@@ -471,17 +509,18 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-st]');if(!
 
 /* ===================================================== shift math */
 function summarize(sh){
-  const s={buyN:0,buyUsd:0,buyEgp:0,buyDue:0,sellN:0,sellUsd:0,sellEgp:0,sellDue:0,settleIn:0,settleOut:0,expUsd:0,expEgp:0,addUsd:0,addEgp:0,outUsd:0,outEgp:0,profit:0,newOn:0,newFor:0,bills:0,p:{}};
+  const s={buyN:0,buyUsd:0,buyEgp:0,buyDue:0,sellN:0,sellUsd:0,sellEgp:0,sellDue:0,settleIn:0,settleOut:0,expUsd:0,expEgp:0,addUsd:0,addEgp:0,outUsd:0,outEgp:0,awOutUsd:0,awOutEgp:0,awInUsd:0,awInEgp:0,profit:0,newOn:0,newFor:0,bills:0,p:{}};
   let stock=sh.open.usd,avg=sh.openCost||0;
   for(const t of sh.tx){
     if(t.type==='buy'){s.buyN++;s.buyUsd+=t.usd;s.buyEgp+=t.cash;s.buyDue+=t.due;s.bills+=t.billsCount||0;avg=(stock+t.usd)>0?(Math.max(stock,0)*avg+t.usd*t.rate)/(Math.max(stock,0)+t.usd):t.rate;stock+=t.usd}
     else if(t.type==='sell'){s.sellN++;s.sellUsd+=t.usd;s.sellEgp+=t.cash;s.sellDue+=t.due;s.bills+=t.billsCount||0;const p=r2(t.usd*(t.rate-(avg||t.rate)));s.p[t.id]=p;s.profit+=p;stock-=t.usd}
     else if(t.type==='settle'){if(t.egp>0)s.settleIn+=t.egp;else s.settleOut-=t.egp}
     else if(t.type==='cash'){s[t.sub+(t.cur==='usd'?'Usd':'Egp')]+=t.amount;if(t.cur==='usd')stock+=t.sub==='add'?t.amount:-t.amount}
+    else if(t.type==='away'){s['aw'+(t.dir==='out'?'Out':'In')+(t.cur==='usd'?'Usd':'Egp')]+=t.amount;if(t.cur==='usd')stock+=t.dir==='in'?t.amount:-t.amount}
     if((t.type==='buy'||t.type==='sell')&&t.debt){if(t.debt>0)s.newOn+=t.debt;else s.newFor-=t.debt}
   }
-  s.usd=r2(sh.open.usd+s.buyUsd-s.sellUsd+s.addUsd-s.outUsd-s.expUsd);
-  s.egp=r2(sh.open.egp-s.buyEgp+s.sellEgp+s.settleIn-s.settleOut+s.addEgp-s.outEgp-s.expEgp);
+  s.usd=r2(sh.open.usd+s.buyUsd-s.sellUsd+s.addUsd-s.outUsd-s.expUsd-s.awOutUsd+s.awInUsd);
+  s.egp=r2(sh.open.egp-s.buyEgp+s.sellEgp+s.settleIn-s.settleOut+s.addEgp-s.outEgp-s.expEgp-s.awOutEgp+s.awInEgp);
   s.avgBuy=s.buyUsd?s.buyDue/s.buyUsd:0;s.avgSell=s.sellUsd?s.sellDue/s.sellUsd:0;
   s.profit=r2(s.profit);s.net=r2(s.profit-s.expEgp-s.expUsd*(S.settings.buy||0));s.count=s.buyN+s.sellN;
   return s;
@@ -491,6 +530,8 @@ const allTx=()=>allShifts().flatMap(sh=>{const s=summarize(sh);return sh.tx.map(
 
 /* ===================================================== tx row */
 const TT={buy:'استلمت دولار',sell:'سلّمت دولار'}, CASH={exp:'مصروف',add:'حطيت فلوس في البيت',out:'سحبت فلوس من البيت'};
+const txLabel=t=>TT[t.type]||(t.type==='cash'?CASH[t.sub]:t.type==='away'?(t.dir==='out'?'فلوس طلعت بره':'فلوس رجعت من بره'):(t.egp>0?'العميل سدد باقي':'دفعت للعميل باقيه'));
+const money=(cur,a)=>cur==='usd'?U(a):E(a);
 function txRow(t,opts={}){
   let av,title,sub,end,endSub='';
   if(t.type==='buy'||t.type==='sell'){
@@ -503,6 +544,9 @@ function txRow(t,opts={}){
   }else if(t.type==='cash'){
     av=`<div class="av cash">${ic(t.sub==='exp'?'receipt':'wallet')}</div>`;title=CASH[t.sub];sub=esc(t.note||'')||'—';
     end=`<b class="n ${t.sub==='add'?'pos':'neg'}">${t.sub==='add'?'+':'-'}${t.cur==='usd'?U(t.amount):E(t.amount)}</b>`;
+  }else if(t.type==='away'){
+    av=`<div class="av user">${ic('out')}</div>`;title=txLabel(t);sub=esc(t.name||'');
+    end=`<b class="n ${t.dir==='in'?'pos':'neg'}">${t.dir==='in'?'+':'-'}${money(t.cur,t.amount)}</b>`;
   }else{
     av=`<div class="av settle">${ic('check')}</div>`;title=t.egp>0?'العميل سدد باقي':'دفعت للعميل باقيه';sub=esc(t.name||'');
     end=`<b class="n ${t.egp>0?'pos':'neg'}">${t.egp>0?'+':'-'}${E(Math.abs(t.egp))}</b>`;
@@ -520,23 +564,30 @@ function txDetail(id){
     body+=`<div class="btns" style="margin-top:16px"><button class="btn" onclick="shareTx('${t.id}')">${ic('wa')}واتساب</button><button class="btn" onclick="printTx('${t.id}')">${ic('print')}طباعة</button>${cur?`<button class="btn ghost" style="color:var(--bad)" onclick="delTx('${t.id}')">${ic('trash')}إلغاء</button>`:''}</div>`;
     sheet(TT[t.type],body);
   }else{
-    body=kv('الوقت',dShort(t.t)+' '+tm(t.t))+(t.type==='cash'?kv('النوع',CASH[t.sub])+kv('المبلغ',t.cur==='usd'?U(t.amount):E(t.amount))+(t.note?kv('السبب',esc(t.note)):''):kv('العميل',esc(t.name))+kv('المبلغ',E(Math.abs(t.egp))));
+    body=kv('الوقت',dShort(t.t)+' '+tm(t.t))+(t.type==='cash'?kv('النوع',CASH[t.sub])+kv('المبلغ',money(t.cur,t.amount))+(t.note?kv('السبب',esc(t.note)):''):t.type==='away'?kv('عند',esc(t.name))+kv('المبلغ',money(t.cur,t.amount)):kv('العميل',esc(t.name))+kv('المبلغ',E(Math.abs(t.egp))));
     if(cur)body+=`<button class="btn ghost xl" style="color:var(--bad);margin-top:16px" onclick="delTx('${t.id}')">${ic('trash')}إلغاء العملية</button>`;
-    sheet(t.type==='cash'?CASH[t.sub]:'تسديد باقي',body);
+    sheet(txLabel(t),body);
   }
 }
 function delTx(id,silent){
   const i=S.shift?S.shift.tx.findIndex(t=>t.id===id):-1;if(i<0)return;const t=S.shift.tx[i];
   if(!silent&&!confirm('متأكد إنك عايز تلغي العملية دي؟'))return;
   if(t.type==='settle'){const d=S.debts.find(x=>x.id===t.debtId);if(d){d.amount=r2(d.amount+t.egp);d.payments=(d.payments||[]).filter(p=>p.txId!==t.id);delete d.paidAt}}
+  if(t.type==='away'){const a=S.away.find(x=>x.id===t.awayId);if(a){if(t.dir==='out')S.away=S.away.filter(x=>x!==a);else{a.left=r2(a.left+t.amount);a.returns=a.returns.filter(r=>r.txId!==t.id);delete a.doneAt}}}
   S.debts=S.debts.filter(d=>d.txId!==id);S.shift.tx.splice(i,1);save();closeSheet();render();toast('العملية اتلغت');
 }
 
+/* ===================================================== time picker (record something that happened earlier) */
+const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const timeChip=(id,t)=>`<label class="timechip">${ic('clock','width:16px')} حصلت الساعة <input type="time" id="${id}" value="${hhmm(t||Date.now())}"> <span style="color:var(--muted)">(غيّرها لو بتسجل حاجة فاتت)</span></label>`;
+function readTime(id,base){const v=$('#'+id)?.value;if(!v)return base||Date.now();if(base&&v===hhmm(base))return base;const [h,m]=v.split(':').map(Number);const d=new Date(base||Date.now());d.setHours(h,m,0,0);let t=d.getTime();if(t>Date.now()+6e4)t-=864e5;if(!base&&Math.abs(t-Date.now())<6e4)t=Date.now();return t}
+function pushTx(tx){S.shift.tx.push(tx);S.shift.tx.sort((a,b)=>a.t-b.t)}
+
 /* ===================================================== new transaction */
 let T;
-function newTx(type){
+function newTx(type,pre){
   if(!S.shift)return toast('ابدأ اليوم الأول');
-  T={type,rateEdited:false};
+  T={type,rateEdited:false,pre:pre||null};
   const small=SMALL.map(d=>`<div class="den"><small>ورق ${d}$</small>${stepper('xb'+d,'','sm')}</div>`).join('');
   sheet('عملية جديدة',`
     <div class="tt" id="xType"><button data-t="buy" class="buy">${ic('down','width:18px')} استلمت دولار<small>العميل بيبيع</small></button><button data-t="sell" class="sell">${ic('up','width:18px')} سلّمت دولار<small>العميل بيشتري</small></button></div>
@@ -557,7 +608,9 @@ function newTx(type){
     <div class="two"><input id="xName" list="custDL" placeholder="الاسم" autocomplete="off"><input id="xPhone" class="n" inputmode="tel" placeholder="التليفون"></div>
     <datalist id="custDL">${customers().map(c=>`<option value="${esc(c.name)}">`).join('')}</datalist>
     <input id="xNote" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
+    ${timeChip('xTime',pre&&pre.t)}
     <button class="btn xl" id="xSave" style="margin-top:16px">${ic('check')}<span>حفظ العملية</span></button>`);
+  if(pre){const u=num(pre.amount),h=Math.floor(u/100),rest=r2(u-h*100);$('#xb100').value=h||'';if(rest){$('#xManual').value=rest;$('#xMore').classList.remove('hidden')}if(pre.note)$('#xNote').value=pre.note}
   const sh=$('#sheet');
   $$('#xType button,#xDir button').forEach(b=>b.onclick=()=>{T.type=b.dataset.t;T.rateEdited=false;updTx()});
   $('#xMoreBtn').onclick=()=>{$('#xMore').classList.toggle('hidden')};
@@ -605,8 +658,8 @@ function saveTx(){
   if(c.rate<=0){toast('اكتب السعر');return}
   const name=$('#xName').value.trim();
   if(c.debt&&!name){toast('فيه متبقي — اكتب اسم العميل');$('#xName').focus();return}
-  const tx={id:uid(),t:Date.now(),type:T.type,bills:c.bills,manual:c.manual,billsCount:c.count,usd:c.usd,rate:c.rate,due:c.due,cash:c.cash,change:c.change,debt:c.debt,name,phone:$('#xPhone').value.trim(),note:$('#xNote').value.trim()};
-  S.shift.tx.push(tx);
+  const tx={id:uid(),t:readTime('xTime',T.pre&&T.pre.t),type:T.type,bills:c.bills,manual:c.manual,billsCount:c.count,usd:c.usd,rate:c.rate,due:c.due,cash:c.cash,change:c.change,debt:c.debt,name,phone:$('#xPhone').value.trim(),note:$('#xNote').value.trim()};
+  pushTx(tx);if(T.pre&&T.pre.draftId)S.drafts=S.drafts.filter(d=>d.id!==T.pre.draftId);
   if(c.debt)S.debts.push({id:uid(),txId:tx.id,t:tx.t,name,phone:tx.phone,original:c.debt,amount:c.debt,payments:[]});
   save();vibrate();render();
   const kv=(a,b)=>`<div class="kv"><span>${a}</span><b class="n">${b}</b></div>`;
@@ -668,7 +721,7 @@ function calcSheet(){
 }
 
 /* ===================================================== cash moves */
-function cashSheet(sub){
+function cashSheet(sub,pre){
   if(!S.shift)return toast('ابدأ اليوم الأول');
   let cur='egp';
   sheet(sub==='exp'?'مصروف':'فلوس البيت',`
@@ -679,13 +732,15 @@ function cashSheet(sub){
     <div class="lbl">${sub==='exp'?'المصروف ده على إيه؟':'ملاحظة'}</div>
     ${sub==='exp'?`<div class="chips" id="mQuick" style="margin-bottom:8px">${['أكل وشرب','مواصلات','إيجار','كهربا','رصيد','أخرى'].map(x=>`<button class="chip">${x}</button>`).join('')}</div>`:''}
     <input id="mNote" placeholder="${sub==='exp'?'مثلاً: غدا':'مثلاً: صاحب المحل'}">
+    ${timeChip('mTime',pre&&pre.t)}
     <button class="btn primary xl" id="mSave" style="margin-top:16px">${ic('check')}سجّل</button>`);
   if(sub!=='exp')$$('#mSub button').forEach(b=>b.onclick=()=>{sub=b.dataset.v;$$('#mSub button').forEach(x=>x.classList.toggle('on',x===b))});
   if(sub!=='exp')sub='add';
   $$('#mCur button').forEach(b=>b.onclick=()=>{cur=b.dataset.v;$$('#mCur button').forEach(x=>x.classList.toggle('on',x===b))});
   $$('#mQuick button').forEach(b=>b.onclick=()=>{$('#mNote').value=b.textContent;$$('#mQuick button').forEach(x=>x.classList.toggle('on',x===b))});
+  if(pre){$('#mAmt').value=pre.amount||'';$('#mNote').value=pre.note||''}
   $('#mSave').onclick=()=>{const a=r2(num($('#mAmt').value));if(a<=0)return toast('اكتب المبلغ');
-    S.shift.tx.push({id:uid(),t:Date.now(),type:'cash',sub,cur,amount:a,note:$('#mNote').value.trim()});save();closeSheet();render();toast('اتسجل')};
+    pushTx({id:uid(),t:readTime('mTime',pre&&pre.t),type:'cash',sub,cur,amount:a,note:$('#mNote').value.trim()});if(pre&&pre.draftId)S.drafts=S.drafts.filter(d=>d.id!==pre.draftId);save();closeSheet();render();toast('اتسجل')};
   setTimeout(()=>$('#mAmt')?.focus(),60);
 }
 
@@ -701,7 +756,7 @@ function closeShiftSheet(){
   sheet('قفل الوردية',`
     <div style="color:var(--muted);font-size:14px;margin-bottom:10px">من ${tm(S.shift.openedAt)} لحد دلوقتي · ${s.count} عملية</div>
     ${kv('استلمت دولار',U(s.buyUsd)+' ← دفعت '+E(s.buyEgp))}${kv('سلّمت دولار',U(s.sellUsd)+' ← استلمت '+E(s.sellEgp))}
-    ${s.expEgp||s.expUsd?kv('مصروفات',E(s.expEgp)+(s.expUsd?' + '+U(s.expUsd):'')):''}${kv('الربح',E(s.net))}
+    ${s.expEgp||s.expUsd?kv('مصروفات',E(s.expEgp)+(s.expUsd?' + '+U(s.expUsd):'')):''}${s.awOutUsd||s.awOutEgp?kv('طلع بره',U(s.awOutUsd)+' + '+E(s.awOutEgp)):''}${s.awInUsd||s.awInEgp?kv('رجع من بره',U(s.awInUsd)+' + '+E(s.awInEgp)):''}${kv('الربح',E(s.net))}
     ${kv('المفروض في البيت',U(s.usd)+' + '+E(s.egp),'total')}
     <div class="lbl" style="margin-top:20px">عدّ الفلوس اللي في البيت فعلاً</div>
     <div class="two"><div><small style="color:var(--muted)">دولار</small><input id="aUsd" type="number" inputmode="decimal" class="n" value="${s.usd}" style="font-size:20px;font-weight:700;text-align:center"></div>
@@ -709,11 +764,12 @@ function closeShiftSheet(){
     <button type="button" class="linkbtn" onclick="$('#cnt').classList.toggle('hidden')">${ic('calc','width:16px')} عدّ بالورقة</button>
     <div id="cnt" class="hidden"><div class="lbl">دولار</div>${counter('u',DEN,'$')}<div class="lbl">مصري</div>${counter('e',EGP_DEN,'')}</div>
     <div class="remain" id="dBox"></div>
+    <div id="dHints"></div>
     <input id="cNotes" placeholder="ملاحظات (اختياري)" style="margin-top:12px">
     <button class="btn danger xl" id="doClose" style="margin-top:14px">${ic('lock')}اقفل الوردية</button>`);
   const diff=()=>{const du=r2(num($('#aUsd').value)-s.usd),de=r2(num($('#aEgp').value)-s.egp);
     const p=(v,f)=>v===0?'مظبوط':v>0?'زيادة '+f(v):'عجز '+f(-v);
-    $('#dBox').className='remain '+(du||de?'bad':'ok');$('#dBox').innerHTML=`${ic(du||de?'alert':'check')}<span>دولار: ${p(du,U)} · مصري: ${p(de,E)}</span>`};
+    $('#dBox').className='remain '+(du||de?'bad':'ok');$('#dBox').innerHTML=`${ic(du||de?'alert':'check')}<span>دولار: ${p(du,U)} · مصري: ${p(de,E)}</span>`;$('#dHints').innerHTML=gapHints(du,de)};
   $('#sheet').oninput=e=>{const c=e.target.dataset.c;if(c){$(c==='u'?'#aUsd':'#aEgp').value=$$(`[data-c="${c}"]`).reduce((a,i)=>a+num(i.dataset.d)*num(i.value),0)}diff()};diff();
   $('#doClose').onclick=()=>{const sh=S.shift;sh.closedAt=Date.now();sh.summary=Object.assign({},s,{p:undefined});
     sh.actual={usd:num($('#aUsd').value),egp:num($('#aEgp').value)};sh.diff={usd:r2(sh.actual.usd-s.usd),egp:r2(sh.actual.egp-s.egp)};sh.notes=$('#cNotes').value.trim();
@@ -729,14 +785,14 @@ function showReport(id,just){
     ${kv('متوسط الشراء / البيع',(s.avgBuy?fmt(s.avgBuy):'—')+' / '+(s.avgSell?fmt(s.avgSell):'—'))}
     ${s.settleIn||s.settleOut?kv('تسديدات (دخل / خرج)',E(s.settleIn)+' / '+E(s.settleOut)):''}
     ${s.addUsd||s.addEgp?kv('حطيت في البيت',U(s.addUsd)+' + '+E(s.addEgp)):''}${s.outUsd||s.outEgp?kv('سحبت من البيت',U(s.outUsd)+' + '+E(s.outEgp)):''}
-    ${kv('مصروفات',E(s.expEgp)+(s.expUsd?' + '+U(s.expUsd):''))}${s.newOn?kv('متبقي جديد على العملاء',E(s.newOn)):''}${s.newFor?kv('متبقي جديد للعملاء',E(s.newFor)):''}
+    ${kv('مصروفات',E(s.expEgp)+(s.expUsd?' + '+U(s.expUsd):''))}${s.awOutUsd||s.awOutEgp?kv('طلع بره',U(s.awOutUsd)+' + '+E(s.awOutEgp)):''}${s.awInUsd||s.awInEgp?kv('رجع من بره',U(s.awInUsd)+' + '+E(s.awInEgp)):''}${s.newOn?kv('متبقي جديد على العملاء',E(s.newOn)):''}${s.newFor?kv('متبقي جديد للعملاء',E(s.newFor)):''}
     ${kv('الربح',E(s.net))}${kv('المفروض في البيت',U(s.usd)+' + '+E(s.egp))}${kv('الفعلي في البيت',U(sh.actual.usd)+' + '+E(sh.actual.egp),'total')}
     ${sh.diff.usd||sh.diff.egp?kv('الفرق',U(sh.diff.usd)+' / '+E(sh.diff.egp)):''}${sh.notes?kv('ملاحظات',esc(sh.notes)):''}`;
   sheet(just?'':'تقرير الوردية',`${just?`<div style="text-align:center"><div class="done-ic">${ic('check')}</div><h2 style="margin:0 0 10px">الوردية اتقفلت</h2></div>`:''}${body}
     <div class="btns" style="margin-top:16px"><button class="btn" id="rWa">${ic('wa')}ابعت واتساب</button><button class="btn" id="rPr">${ic('print')}طباعة</button></div>
     <button class="btn primary xl" style="margin-top:10px" onclick="closeSheet()">تمام</button>`);
   $('#rWa').onclick=()=>window.open(waLink('',shiftText(sh)),'_blank');
-  $('#rPr').onclick=()=>doPrint(`<div class="rep"><h2>${esc(S.settings.shop)} — تقرير الوردية</h2>${body}<h3>العمليات</h3><table><tr><th>الوقت</th><th>النوع</th><th>دولار</th><th>مصري</th><th>العميل</th></tr>${sh.tx.map(t=>`<tr><td>${tm(t.t)}</td><td>${TT[t.type]||CASH[t.sub]||'تسديد'}</td><td>${t.usd?U(t.usd):t.cur==='usd'?U(t.amount):''}</td><td>${t.cash!==undefined?E(t.cash):t.egp?E(Math.abs(t.egp)):t.cur==='egp'?E(t.amount):''}</td><td>${esc(t.name||'')}</td></tr>`).join('')}</table></div>`);
+  $('#rPr').onclick=()=>doPrint(`<div class="rep"><h2>${esc(S.settings.shop)} — تقرير الوردية</h2>${body}<h3>العمليات</h3><table><tr><th>الوقت</th><th>النوع</th><th>دولار</th><th>مصري</th><th>العميل</th></tr>${sh.tx.map(t=>`<tr><td>${tm(t.t)}</td><td>${txLabel(t)}</td><td>${t.usd?U(t.usd):t.cur==='usd'?U(t.amount):''}</td><td>${t.cash!==undefined?E(t.cash):t.egp?E(Math.abs(t.egp)):t.cur==='egp'?E(t.amount):''}</td><td>${esc(t.name||'')}</td></tr>`).join('')}</table></div>`);
 }
 
 /* ===================================================== customers */
@@ -770,6 +826,152 @@ function settle(id){
     toast(d.amount?'اتسجل — لسه متبقي '+E(Math.abs(d.amount)):'اتسدد بالكامل');custDetail(d.name.trim())};
 }
 
+
+/* ===================================================== money outside (فلوس بره) */
+const awayOpen=()=>S.away.filter(a=>a.left>0);
+const isLate=a=>a.due&&a.left>0&&Date.now()>new Date(a.due+'T23:59').getTime();
+function awaySheet(){
+  let cur='egp';const names=[...new Set([...customers().map(c=>c.name),...S.away.map(a=>a.name)])];
+  sheet('فلوس سايبها بره',`
+    <div class="lbl" style="margin-top:0">عند مين؟</div>
+    <input id="wName" list="wDL" placeholder="الاسم" autocomplete="off"><datalist id="wDL">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+    <div class="lbl">العملة</div>
+    <div class="tt" id="wCur"><button data-v="egp" class="on neutral">مصري</button><button data-v="usd" class="neutral">دولار</button></div>
+    <div class="lbl">المبلغ</div><input id="wAmt" type="number" inputmode="decimal" class="n" style="font-size:26px;font-weight:700;text-align:center" placeholder="0">
+    <div class="lbl">ليه؟</div>
+    <div class="chips" id="wWhy" style="margin-bottom:8px">${['أمانة','سلفة','عند عميل هيدفع بعدين','عند شريك','أخرى'].map(x=>`<button class="chip">${x}</button>`).join('')}</div>
+    <input id="wNote" placeholder="تفاصيل (اختياري)">
+    <div class="lbl">هترجع إمتى؟ <span style="font-weight:400;color:var(--muted)">(اختياري — هنبهك لو اتأخرت)</span></div>
+    <input id="wDue" type="date">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:14px"><input type="checkbox" id="wFromHome" ${S.shift?'checked':''} style="width:18px;height:18px"> الفلوس دي طلعت من البيت النهارده</label>
+    <div style="color:var(--muted);font-size:13px;margin-top:4px">شيل العلامة لو الفلوس دي بره من زمان ومش من فلوس البيت النهارده.</div>
+    <button class="btn primary xl" id="wSave" style="margin-top:16px">${ic('check')}سجّل</button>`);
+  $$('#wCur button').forEach(b=>b.onclick=()=>{cur=b.dataset.v;$$('#wCur button').forEach(x=>x.classList.toggle('on',x===b))});
+  $$('#wWhy button').forEach(b=>b.onclick=()=>{$$('#wWhy button').forEach(x=>x.classList.toggle('on',x===b))});
+  $('#wSave').onclick=()=>{
+    const name=$('#wName').value.trim(),a=r2(num($('#wAmt').value)),home=$('#wFromHome').checked;
+    if(!name)return toast('اكتب الفلوس عند مين');if(a<=0)return toast('اكتب المبلغ');
+    if(home&&!S.shift)return toast('ابدأ اليوم الأول، أو شيل علامة "طلعت من البيت"');
+    const why=$('#wWhy .chip.on')?.textContent||'';
+    const it={id:uid(),t:Date.now(),name,cur,amount:a,left:a,why,note:$('#wNote').value.trim(),due:$('#wDue').value||'',returns:[]};
+    S.away.push(it);
+    if(home)pushTx({id:uid(),t:Date.now(),type:'away',dir:'out',cur,amount:a,awayId:it.id,name});
+    save();closeSheet();render();toast('اتسجل — هتلاقيها في "فلوس بره"');
+  };
+  setTimeout(()=>$('#wName')?.focus(),60);
+}
+function awayReturn(id){
+  const a=S.away.find(x=>x.id===id);if(!a)return;
+  sheet('رجعلك فلوس من '+esc(a.name),`<div style="color:var(--ink2)">لسه بره: <b class="n">${money(a.cur,a.left)}</b></div>
+    <div class="lbl">رجع كام؟</div><input id="rtA" type="number" inputmode="decimal" class="n" value="${a.left}" style="font-size:26px;font-weight:700;text-align:center">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:14px"><input type="checkbox" id="rtHome" ${S.shift?'checked':''} style="width:18px;height:18px"> دخلت البيت دلوقتي</label>
+    <button class="btn primary xl" id="rtS" style="margin-top:16px">${ic('check')}سجّل</button>`);
+  $('#rtS').onclick=()=>{const v=r2(Math.min(a.left,num($('#rtA').value)));if(v<=0)return toast('اكتب المبلغ');const home=$('#rtHome').checked;
+    if(home&&!S.shift)return toast('ابدأ اليوم الأول، أو شيل علامة "دخلت البيت"');
+    const txId=home?uid():null;
+    if(home)pushTx({id:txId,t:Date.now(),type:'away',dir:'in',cur:a.cur,amount:v,awayId:a.id,name:a.name});
+    a.left=r2(a.left-v);a.returns.push({t:Date.now(),amount:v,txId});if(!a.left)a.doneAt=Date.now();
+    save();closeSheet();render();toast(a.left?'اتسجل — لسه بره '+money(a.cur,a.left):'رجعت كلها')};
+}
+function awayDel(id){
+  if(!confirm('تمسح التسجيل ده؟ (لو كان طالع من فلوس البيت النهارده هيرجع لحساب البيت)'))return;
+  if(S.shift)S.shift.tx=S.shift.tx.filter(x=>!(x.type==='away'&&x.awayId===id));
+  S.away=S.away.filter(x=>x.id!==id);save();closeSheet();render();
+}
+function awayDetail(id){
+  const a=S.away.find(x=>x.id===id);if(!a)return;
+  const kv=(x,y)=>`<div class="kv"><span>${x}</span><b class="n">${y}</b></div>`;
+  sheet(esc(a.name),`${kv('المبلغ',money(a.cur,a.amount))}${kv('لسه بره',money(a.cur,a.left))}${kv('من يوم',dLong(a.t))}${a.why?kv('ليه',esc(a.why)):''}${a.note?kv('تفاصيل',esc(a.note)):''}${a.due?kv('المفروض ترجع',a.due+(isLate(a)?' — اتأخرت':'')):''}
+    ${a.returns.map(r=>kv('رجع يوم '+dShort(r.t),money(a.cur,r.amount))).join('')}
+    ${a.left?`<button class="btn primary xl" style="margin-top:16px" onclick="awayReturn('${a.id}')">${ic('check')}رجعلي فلوس</button>`:''}
+    <button class="btn ghost xl" style="margin-top:10px;color:var(--bad)" onclick="awayDel('${a.id}')">${ic('trash')}امسح التسجيل ده</button>`);
+}
+function awayRow(a){
+  const late=isLate(a);
+  return `<div class="row click" onclick="awayDetail('${a.id}')"><div class="av ${late?'cash':'user'}">${ic(late?'alert':'out')}</div><div class="mid"><b>${esc(a.name)}</b><small>${esc(a.why||'')}${a.why?' · ':''}من ${dShort(a.t)}${a.due?` · ${late?'<span class="neg">اتأخرت</span>':'ترجع '+a.due}`:''}</small></div><div class="end"><b class="n">${money(a.cur,a.left||a.amount)}</b><small>${a.left?(a.left<a.amount?'باقي من '+money(a.cur,a.amount):''):'رجعت'}</small></div></div>`;
+}
+
+/* ===================================================== quick record (سجّل بسرعة) */
+const DK={buy:'استلمت دولار',sell:'سلّمت دولار',exp:'مصروف',other:'حاجة تانية'};
+function quickSheet(){
+  let kind='buy';
+  sheet('سجّل بسرعة',`<div style="color:var(--muted);font-size:14px;margin-top:-8px">اكتب المبلغ بس دلوقتي، وكمّل التفاصيل لما تفضى. البرنامج هيفكّرك.</div>
+    <div class="chips" id="qK" style="margin-top:14px">${Object.entries(DK).map(([k,v],i)=>`<button class="chip ${i?'':'on'}" data-k="${k}">${v}</button>`).join('')}</div>
+    <div class="lbl" id="qL">المبلغ بالدولار</div><input id="qA" type="number" inputmode="decimal" class="n" style="font-size:30px;font-weight:700;text-align:center" placeholder="0">
+    <input id="qN" placeholder="كلمة تفكرك (اختياري) — مثلاً: الراجل بتاع العربية" style="margin-top:10px">
+    <button class="btn primary xl" id="qS" style="margin-top:16px">${ic('bolt')}احفظ وكمّل بعدين</button>`);
+  $$('#qK .chip').forEach(b=>b.onclick=()=>{kind=b.dataset.k;$$('#qK .chip').forEach(x=>x.classList.toggle('on',x===b));$('#qL').textContent=kind==='buy'||kind==='sell'?'المبلغ بالدولار':kind==='exp'?'المبلغ بالمصري':'المبلغ'});
+  $('#qS').onclick=()=>{const a=r2(num($('#qA').value));if(a<=0&&kind!=='other')return toast('اكتب المبلغ');
+    S.drafts.push({id:uid(),t:Date.now(),kind,amount:a,note:$('#qN').value.trim()});save();closeSheet();render();toast('اتحفظ — كمّله من الرئيسية لما تفضى')};
+  setTimeout(()=>$('#qA')?.focus(),60);
+}
+function draftsSheet(){
+  if(!S.drafts.length)return closeSheet();
+  sheet('حاجات لسه ما كملتهاش',S.drafts.map(d=>`<div class="row"><div class="av cash">${ic('bolt')}</div><div class="mid"><b>${DK[d.kind]}${d.amount?' <span class="n">'+(d.kind==='buy'||d.kind==='sell'?U(d.amount):E(d.amount))+'</span>':''}</b><small>${tm(d.t)} · ${dShort(d.t)}${d.note?' · '+esc(d.note):''}</small></div><button class="btn sm primary" onclick="finishDraft('${d.id}')">كمّل</button><button class="btn sm ghost" onclick="dropDraft('${d.id}')">${ic('trash','width:16px')}</button></div>`).join(''));
+}
+function finishDraft(id){
+  const d=S.drafts.find(x=>x.id===id);if(!d)return;if(!S.shift)return toast('ابدأ اليوم الأول');
+  const pre={draftId:d.id,amount:d.amount,note:d.note,t:d.t};
+  if(d.kind==='buy'||d.kind==='sell')newTx(d.kind,pre);else if(d.kind==='exp')cashSheet('exp',pre);
+  else{if(confirm('خلصت الحاجة دي وعايز تشيلها من القايمة؟'))dropDraft(id)}
+}
+function dropDraft(id){S.drafts=S.drafts.filter(x=>x.id!==id);save();render();draftsSheet()}
+
+/* ===================================================== quick count + gap help */
+function gapHints(du,de){
+  if(!du&&!de)return '';
+  const out=[],b=S.settings.buy,s=S.settings.sell,near=(x,y)=>Math.abs(x-y)<=Math.max(5,Math.abs(y)*0.02);
+  if(du>0&&de<0&&(near(-de,du*b)||near(-de,du*s)))out.push(`ممكن تكون <b>استلمت ${U(du)} ودفعت ${E(-de)}</b> ونسيت تسجلها`);
+  else if(du<0&&de>0&&(near(de,-du*s)||near(de,-du*b)))out.push(`ممكن تكون <b>سلّمت ${U(-du)} واستلمت ${E(de)}</b> ونسيت تسجلها`);
+  else{
+    if(de<0)out.push(`ناقص ${E(-de)} مصري: ممكن مصروف، أو فلوس طلعت بره، أو دفعت لعميل ونسيت تسجل${b?` (ده تقريباً قيمة ${U(Math.round(-de/b))})`:''}`);
+    if(de>0)out.push(`زيادة ${E(de)} مصري: ممكن عميل سدد باقي أو سلّمت دولار ونسيت تسجل`);
+    if(du<0)out.push(`ناقص ${U(-du)}: ممكن سلّمت دولار أو دولار طلع بره ونسيت تسجل`);
+    if(du>0)out.push(`زيادة ${U(du)}: ممكن استلمت دولار ونسيت تسجل`);
+  }
+  if(S.drafts.length)out.push(`عندك ${S.drafts.length} حاجة في "سجّل بسرعة" لسه ما اتكملتش`);
+  return `<div class="card" style="margin-top:10px;box-shadow:none;background:var(--soft);border:0"><b style="font-size:14px">${ic('alert','width:16px;vertical-align:-3px')} إيه اللي ممكن يكون حصل؟</b>${out.map(x=>`<div style="font-size:14px;margin-top:6px">• ${x}</div>`).join('')}
+    <div style="font-size:13px;color:var(--muted);margin-top:8px">لو افتكرت، سجّلها دلوقتي بالساعة اللي حصلت فيها:</div>
+    <div class="chips" style="margin-top:8px"><button class="chip" onclick="newTx('buy')">استلمت دولار</button><button class="chip" onclick="newTx('sell')">سلّمت دولار</button><button class="chip" onclick="cashSheet('exp')">مصروف</button><button class="chip" onclick="awaySheet()">فلوس بره</button>${S.drafts.length?'<button class="chip" onclick="draftsSheet()">المتسجل بسرعة</button>':''}</div></div>`;
+}
+function countSheet(){
+  if(!S.shift)return toast('ابدأ اليوم الأول');const s=summarize(S.shift);
+  sheet('جرد سريع',`<div style="color:var(--muted);font-size:14px;margin-top:-8px">عدّ اللي في البيت دلوقتي — لو فيه فرق هتعرفه بدري وانت لسه فاكر.</div>
+    <div class="kv total" style="margin-top:12px"><span>المفروض في البيت</span><b class="n">${U(s.usd)} + ${E(s.egp)}</b></div>
+    <div class="two" style="margin-top:12px"><div><small style="color:var(--muted)">دولار عدّيته</small><input id="kU" type="number" inputmode="decimal" class="n" style="font-size:20px;font-weight:700;text-align:center" placeholder="${s.usd}"></div>
+    <div><small style="color:var(--muted)">مصري عدّيته</small><input id="kE" type="number" inputmode="decimal" class="n" style="font-size:20px;font-weight:700;text-align:center" placeholder="${s.egp}"></div></div>
+    <button type="button" class="linkbtn" onclick="$('#kc').classList.toggle('hidden')">${ic('calc','width:16px')} عدّ بالورقة</button>
+    <div id="kc" class="hidden"><div class="lbl">دولار</div>${counter('u',DEN,'$')}<div class="lbl">مصري</div>${counter('e',EGP_DEN,'')}</div>
+    <div class="remain info" id="kBox">${ic('scale')}<span>اكتب اللي عدّيته</span></div><div id="kHints"></div>`);
+  const upd=()=>{const hu=$('#kU').value!=='',he=$('#kE').value!=='';if(!hu&&!he)return;
+    const du=hu?r2(num($('#kU').value)-s.usd):0,de=he?r2(num($('#kE').value)-s.egp):0,p=(v,f)=>v===0?'مظبوط':v>0?'زيادة '+f(v):'ناقص '+f(-v);
+    $('#kBox').className='remain '+(du||de?'bad':'ok');$('#kBox').innerHTML=`${ic(du||de?'alert':'check')}<span>${hu?'دولار: '+p(du,U):''}${hu&&he?' · ':''}${he?'مصري: '+p(de,E):''}</span>`;
+    $('#kHints').innerHTML=gapHints(du,de);S.shift.lastCount=Date.now();save()};
+  $('#sheet').oninput=e=>{const c=e.target.dataset.c;if(c)$(c==='u'?'#kU':'#kE').value=$$(`[data-c="${c}"]`).reduce((a,i)=>a+num(i.dataset.d)*num(i.value),0);upd()};
+  setTimeout(()=>$('#kU')?.focus(),60);
+}
+
+/* ===================================================== reminders (للمالك بس) */
+function reminders(){
+  const out=[];
+  if(S.shift&&S.settings.idle>0){const last=Math.max(S.shift.openedAt,...S.shift.tx.map(x=>x.t)),h=(Date.now()-last)/36e5;
+    if(h>=S.settings.idle)out.push({key:'idle-'+Math.floor(last/6e4),cls:'warn',icon:'clock',text:`بقالك ${Math.floor(h)} ساعة ما سجلتش حاجة — نسيت تسجل حاجة؟`,btn:'سجّل بسرعة',fn:'quickSheet()'})}
+  if(S.drafts.length)out.push({key:'drafts-'+S.drafts.length+'-'+dayStart(Date.now()),cls:'warn',icon:'bolt',text:`عندك ${S.drafts.length} حاجة سجلتها بسرعة ولسه ما كملتهاش`,btn:'كمّلها',fn:'draftsSheet()'});
+  const late=S.away.filter(isLate);
+  late.forEach(a=>out.push({key:'late-'+a.id+'-'+dayStart(Date.now()),cls:'bad',icon:'out',text:`فلوسك عند ${esc(a.name)} (${money(a.cur,a.left)}) اتأخرت عن ميعادها`,btn:'شوف',fn:`awayDetail('${a.id}')`}));
+  return out;
+}
+function notifyCheck(){
+  if(!('Notification' in window)||Notification.permission!=='granted'||document.documentElement.classList.contains('locked'))return;
+  const today=dayStart(Date.now());let changed=false;
+  for(const r of reminders()){if(S.notified[r.key])continue;S.notified[r.key]=today;changed=true;
+    const body=r.text.replace(/<[^>]+>/g,'');
+    navigator.serviceWorker?.getRegistration().then(reg=>reg?reg.showNotification(S.settings.shop||'صرافة',{body,icon:'icon-192.png',tag:r.key}):new Notification(S.settings.shop||'صرافة',{body,icon:'icon-192.png'})).catch(()=>{try{new Notification(S.settings.shop||'صرافة',{body})}catch(e){}})}
+  for(const k in S.notified)if(S.notified[k]<today-7*864e5){delete S.notified[k];changed=true}
+  if(changed)save();
+}
+function notifLabel(){const b=$('#notifBtn span');if(!b)return;if(!('Notification' in window))b.textContent='الجهاز ده مش بيدعم الإشعارات';else if(Notification.permission==='granted')b.textContent='الإشعارات شغالة ✓';else if(Notification.permission==='denied')b.textContent='الإشعارات مقفولة من المتصفح';else b.textContent='فعّل الإشعارات على الجهاز ده'}
+
 /* ===================================================== charts */
 function barChart(data){ // [{label, v}]
   const W=520,H=190,P=24,max=Math.max(1,...data.map(d=>Math.abs(d.v))),bw=(W-P)/data.length;
@@ -788,20 +990,21 @@ function rateChart(){
 
 /* ===================================================== render */
 let view='home',opsF='',opsR='shift',custF='',repR='0';
-const TITLES={home:'الرئيسية',ops:'العمليات',cust:'العملاء',rep:'التقارير',set:'الإعدادات'};
+const TITLES={home:'الرئيسية',ops:'العمليات',cust:'العملاء',away:'فلوس بره',rep:'التقارير',set:'الإعدادات'};
 function go(v){view=v;$$('#nav a[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===v));$$('section[data-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.view!==v));$('#pageTitle').textContent=TITLES[v];window.scrollTo(0,0);render()}
 $$('#nav a[data-v]').forEach(a=>a.onclick=()=>go(a.dataset.v));
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go);const n=e.target.closest('[data-new]');if(n)newTx(n.dataset.new);if(e.target.closest('[data-rate]'))rateSheet()});
 const chipGroup=(sel,fn)=>$(sel).addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;$$(sel+' .chip').forEach(x=>x.classList.toggle('on',x===b));fn(b);render()});
 chipGroup('#opsF',b=>opsF=b.dataset.f);chipGroup('#opsR',b=>opsR=b.dataset.r);chipGroup('#custF',b=>custF=b.dataset.f);chipGroup('#repR',b=>repR=b.dataset.r);
 $('#opsQ').oninput=render;$('#custQ').oninput=render;
-$('#aExp').onclick=()=>cashSheet('exp');$('#aMove').onclick=()=>cashSheet('add');$('#aCalc').onclick=calcSheet;$('#aClose').onclick=closeShiftSheet;
+$('#aQuick').onclick=quickSheet;$('#aAway').onclick=awaySheet;$('#aCount').onclick=countSheet;$('#awAdd').onclick=awaySheet;$('#aExp').onclick=()=>cashSheet('exp');$('#aMove').onclick=()=>cashSheet('add');$('#aCalc').onclick=calcSheet;$('#aClose').onclick=closeShiftSheet;
 
 function render(){
   const sh=S.shift,s=sh?summarize(sh):null,st=S.settings;
   $('#navShop').textContent=st.shop||'صرافة';document.title=(st.shop||'صرافة')+' — دولار ومصري';
   const pill=$('#shiftPill');pill.querySelector('.dot').style.background=sh?'var(--buy)':'var(--muted)';pill.lastElementChild.textContent=sh?'الوردية شغالة من '+tm(sh.openedAt):'الوردية مقفولة';
   const open=S.debts.filter(d=>d.amount);$('#debtCnt').textContent=open.length;$('#debtCnt').classList.toggle('hidden',!open.length);
+  const aw=awayOpen(),awLate=aw.filter(isLate).length;$('#awayCnt').textContent=awLate||aw.length;$('#awayCnt').classList.toggle('hidden',!aw.length);$('#awayCnt').style.background=awLate?'var(--bad)':'var(--muted)';
 
   if(view==='home'){
     $('#startDay').classList.toggle('hidden',!!sh);$('#homeMain').classList.toggle('hidden',!sh);
@@ -809,7 +1012,7 @@ function render(){
     else{
       $('#hBuy').textContent=fmt(st.buy);$('#hSell').textContent=fmt(st.sell);
       $('#kUsd').textContent=U(s.usd);$('#kEgp').textContent=E(s.egp);$('#kProfit').textContent=E(s.net);$('#kCount').textContent=s.count;
-      const al=[];
+      const al=reminders().map(r=>`<div class="alert ${r.cls}">${ic(r.icon)}<span>${r.text}</span><button onclick="${r.fn}">${r.btn}</button></div>`);
       if(st.low&&s.usd<st.low)al.push(`<div class="alert bad">${ic('alert')}الدولار في البيت قليل: <b class="n">${U(s.usd)}</b></div>`);
       if(s.usd<0)al.push(`<div class="alert bad">${ic('alert')}الدولار بالسالب — راجع العمليات</div>`);
       if(s.egp<0)al.push(`<div class="alert bad">${ic('alert')}المصري بالسالب — راجع العمليات</div>`);
@@ -817,6 +1020,12 @@ function render(){
       if(days>3&&allTx().length>5)al.push(`<div class="alert warn">${ic('download')}بقالك ${S.lastBackup?Math.floor(days)+' يوم':'فترة'} من غير نسخة احتياطية<button onclick="backup()">نزّل دلوقتي</button></div>`);
       if(open.length)al.push(`<div class="alert warn">${ic('users')}فيه ${open.length} عميل ليهم أو عليهم متبقي<button data-go="cust">شوف</button></div>`);
       $('#alerts').innerHTML=al.join('');
+      const awU=r2(aw.filter(a=>a.cur==='usd').reduce((x,a)=>x+a.left,0)),awE=r2(aw.filter(a=>a.cur==='egp').reduce((x,a)=>x+a.left,0)),dOn=r2(open.filter(d=>d.amount>0).reduce((x,d)=>x+d.amount,0)),dFor=r2(-open.filter(d=>d.amount<0).reduce((x,d)=>x+d.amount,0));
+      const capU=r2(s.usd+awU),capE=r2(s.egp+awE+dOn-dFor);
+      $('#capital').innerHTML=`<div class="big"><small>${ic('wallet','width:15px;vertical-align:-2px')} رأس مالك كله</small><b class="n">${U(capU)} + ${E(capE)}</b><small class="n">يعني حوالي ${E(capE+capU*st.buy)} بسعر الشراء</small></div>
+        <div class="part">في البيت<b class="n">${U(s.usd)} + ${E(s.egp)}</b></div>
+        <div class="part" style="cursor:pointer" data-go="away">فلوس بره<b class="n">${awU||awE?`${U(awU)} + ${E(awE)}`:'مفيش'}</b></div>
+        <div class="part" style="cursor:pointer" data-go="cust">عند العملاء<b class="n">${dOn||dFor?E(dOn-dFor):'مفيش'}</b></div>`;
       const last=sh.tx.slice(-6).reverse().map(t=>Object.assign({},t,{profit:s.p[t.id]}));
       $('#hList').innerHTML=last.map(t=>txRow(t)).join('')||`<div class="empty">${ic('list')}لسه مفيش عمليات النهارده<br>دوس على "استلمت دولار" أو "سلّمت دولار"</div>`;
       const kv=(a,b,c='')=>`<div class="kv"><span>${a}</span><b class="n ${c}">${b}</b></div>`;
@@ -831,6 +1040,11 @@ function render(){
     let html='',lastDay='';
     for(const t of list.slice(0,300)){const d=dLong(t.t);if(opsR!=='shift'&&d!==lastDay){html+=`<div class="lbl">${d}</div>`;lastDay=d}html+=txRow(t)}
     $('#opsList').innerHTML=html||`<div class="empty">${ic('list')}${opsR==='shift'&&!sh?'الوردية مقفولة':'مفيش عمليات'}</div>`;
+  }
+  if(view==='away'){
+    const all=S.away;$('#awUsd').textContent=U(aw.filter(a=>a.cur==='usd').reduce((x,a)=>x+a.left,0));$('#awEgp').textContent=E(aw.filter(a=>a.cur==='egp').reduce((x,a)=>x+a.left,0));
+    $('#awList').innerHTML=aw.sort((a,b)=>isLate(b)-isLate(a)||b.t-a.t).map(awayRow).join('')||`<div class="empty">${ic('out')}مفيش فلوس بره دلوقتي<br>لو سبت فلوس عند حد سجّلها هنا عشان ما تنساهاش</div>`;
+    $('#awDone').innerHTML=all.filter(a=>!a.left).sort((a,b)=>b.doneAt-a.doneAt).slice(0,50).map(awayRow).join('')||'<div class="empty">مفيش</div>';
   }
   if(view==='cust'){
     const cs=customers(),q=$('#custQ').value.trim();
@@ -849,7 +1063,7 @@ function render(){
     $('#shiftList').innerHTML=S.history.slice(0,60).map(h=>{const x=h.summary,bad=h.diff&&(h.diff.usd||h.diff.egp);return `<div class="row click" onclick="showReport('${h.id}')"><div class="av ${bad?'cash':'buy'}">${ic(bad?'alert':'check')}</div><div class="mid"><b>${dLong(h.openedAt)}</b><small>${tm(h.openedAt)} ← ${tm(h.closedAt)} · ${x.count} عملية${bad?` · <span class="neg">فرق ${U(h.diff.usd)} / ${E(h.diff.egp)}</span>`:''}</small></div><div class="end"><b class="n pos">${E(x.net)}</b><small>ربح</small></div></div>`}).join('')||`<div class="empty">${ic('chart')}لسه مفيش ورديات اتقفلت</div>`;
   }
   if(view==='set'){
-    const f=(id,v)=>{if(document.activeElement!==$(id))$(id).value=v};f('#sShop',st.shop);f('#sPhone',st.phone||'');f('#sLow',st.low||'');
+    const f=(id,v)=>{if(document.activeElement!==$(id))$(id).value=v};f('#sShop',st.shop);f('#sPhone',st.phone||'');f('#sLow',st.low||'');f('#sIdle',st.idle??2);notifLabel();
   }
 }
 
@@ -857,6 +1071,9 @@ function render(){
 $('#sShop').oninput=e=>{S.settings.shop=e.target.value;save();render()};
 $('#sPhone').oninput=e=>{S.settings.phone=e.target.value;save()};
 $('#sLow').oninput=e=>{S.settings.low=num(e.target.value);save()};
+$('#sIdle').oninput=e=>{S.settings.idle=num(e.target.value);save()};
+$('#notifBtn').onclick=async()=>{if(!('Notification' in window))return toast('الجهاز ده مش بيدعم الإشعارات');if(Notification.permission==='denied')return toast('الإشعارات مقفولة — افتحها من إعدادات المتصفح');
+  const r=await Notification.requestPermission();notifLabel();if(r==='granted'){toast('تمام — هتوصلك التنبيهات انت بس');notifyCheck()}};
 function setTheme(d){S.settings.dark=d;document.documentElement.dataset.theme=d?'dark':'';save()}
 $('#themeBtn').onclick=$('#navTheme').onclick=()=>setTheme(!S.settings.dark);
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}
@@ -866,7 +1083,7 @@ $('#bkBtn').onclick=backup;$('#rsBtn').onclick=()=>$('#rsFile').click();
 $('#rsFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);if(!d.settings)throw 0;if(!confirm('ده هيحط النسخة دي مكان البيانات الحالية. متأكد؟'))return;S=Object.assign(defaults(),d);save();location.reload()}).catch(()=>toast('الملف ده مش نسخة احتياطية صح'))};
 $('#csvBtn').onclick=()=>{
   const rows=[['التاريخ','الوقت','النوع','دولار','عدد الورق','السعر','الإجمالي مصري','مدفوع/مستلم','متبقي','ربح','العميل','التليفون','ملاحظة']];
-  allTx().sort((a,b)=>a.t-b.t).forEach(t=>{const d=new Date(t.t);rows.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB'),TT[t.type]||CASH[t.sub]||(t.egp>0?'العميل سدد':'دفعت للعميل'),t.usd??(t.cur==='usd'?t.amount:''),t.billsCount??'',t.rate??'',t.due??'',t.cash??(t.egp?Math.abs(t.egp):t.cur==='egp'?t.amount:''),t.debt||'',t.profit||'',t.name||'',t.phone||'',t.note||''])});
+  allTx().sort((a,b)=>a.t-b.t).forEach(t=>{const d=new Date(t.t);rows.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB'),txLabel(t),t.usd??(t.cur==='usd'?t.amount:''),t.billsCount??'',t.rate??'',t.due??'',t.cash??(t.egp?Math.abs(t.egp):t.cur==='egp'?t.amount:''),t.debt||'',t.profit||'',t.name||'',t.phone||'',t.note||''])});
   download(`عمليات-الصرافة-${stamp()}.csv`,'﻿'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 };
 $('#wipeBtn').onclick=()=>{if(prompt('اكتب كلمة "امسح" عشان تمسح كل العمليات والعملاء')!=='امسح')return toast('ماتمسحش حاجة');S=defaults();save();location.reload()};
@@ -891,6 +1108,7 @@ $('#lForgot').onclick=()=>{alert('مفيش طريقة ترجع بيها البا
 if(S.settings.dark)document.documentElement.dataset.theme='dark';
 if(!S.rateLog.length)S.rateLog.push({t:Date.now(),buy:S.settings.buy,sell:S.settings.sell});
 setupLock();render();
+setInterval(()=>{if(view==='home')render();notifyCheck()},5*60*1000);setTimeout(notifyCheck,3000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
