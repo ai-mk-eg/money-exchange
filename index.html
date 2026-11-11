@@ -112,6 +112,10 @@ html,body{overflow-x:hidden}
 .vex{font-size:13px;color:var(--muted);background:var(--soft);border-radius:12px;padding:10px 12px;margin-top:10px;line-height:1.9}
 .vcard{border:2px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
 .vcard.buy{border-color:var(--buy)}.vcard.sell{border-color:var(--sell)}.vcard.exp,.vcard.away{border-color:var(--warn)}
+.fab{position:fixed;left:24px;bottom:24px;width:62px;height:62px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;box-shadow:0 6px 20px #0b1b3355;z-index:40}
+.fab svg{width:28px;height:28px}
+.fab.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
+@media (max-width:860px){.fab{bottom:calc(84px + env(safe-area-inset-bottom));left:16px;width:56px;height:56px}}
 .minact.quick{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 .capital{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px;align-items:center}
 .capital .big small{color:var(--muted);font-size:13px}
@@ -324,7 +328,7 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
           <button class="card rate buy" data-rate><div class="ic"><svg class="i"><use href="#i-down"/></svg></div><div><small>بنشتري الدولار بـ</small><b class="n" id="hBuy">0</b></div><svg class="i edit"><use href="#i-edit"/></svg></button>
           <button class="card rate sell" data-rate><div class="ic"><svg class="i"><use href="#i-up"/></svg></div><div><small>بنبيع الدولار بـ</small><b class="n" id="hSell">0</b></div><svg class="i edit"><use href="#i-edit"/></svg></button>
         </div>
-        <button class="voicebtn" id="aVoice"><div class="mic"><svg class="i"><use href="#i-mic"/></svg></div><div><b>قول العملية بصوتك</b><small>مثلاً: "غيرت 10 ورقات لأحمد بـ 55 ألف جنيه"</small></div></button>
+        <button class="voicebtn" id="aVoice"><div class="mic"><svg class="i"><use href="#i-mic"/></svg></div><div><b>قول العملية بصوتك</b><small>عمليات، فلوس بره، فلوس البيت، مصروفات، أسئلة… قول أي حاجة</small></div></button>
         <div class="bigacts">
           <button class="bigact buy" data-new="buy"><div class="ic"><svg class="i"><use href="#i-down"/></svg></div><div><b>استلمت دولار</b><small>العميل بيبيع — أنا بدفع مصري</small></div></button>
           <button class="bigact sell" data-new="sell"><div class="ic"><svg class="i"><use href="#i-up"/></svg></div><div><b>سلّمت دولار</b><small>العميل بيشتري — أنا بستلم مصري</small></div></button>
@@ -422,6 +426,13 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
           <input type="file" id="rsFile" accept=".json" class="hidden">
         </div>
         <div class="card">
+          <h3>التسجيل بالصوت</h3>
+          <div class="lbl" style="margin-top:0">المايك يستنى قد إيه بعد ما تسكت قبل ما يقفل</div>
+          <div class="chips" id="sWait"><button class="chip" data-w="3">3 ثواني</button><button class="chip" data-w="5">5 ثواني</button><button class="chip" data-w="8">8 ثواني</button><button class="chip" data-w="12">12 ثانية</button></div>
+          <label style="display:flex;gap:10px;align-items:center;margin-top:14px;font-size:15px"><input type="checkbox" id="sAuto" style="width:20px;height:20px"> سجّل لوحده بعد 3 ثواني من غير ما أدوس (تقدر تلغي)</label>
+          <label style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:15px"><input type="checkbox" id="sSpeak" style="width:20px;height:20px"> البرنامج يرد عليا بصوت</label>
+        </div>
+        <div class="card">
           <h3>التنبيهات</h3>
           <div style="color:var(--muted);font-size:14px;margin-bottom:12px">التنبيهات بتوصلك انت بس على الجهاز ده، ومحدش من العملاء بيوصله حاجة. بتظهر وانت فاتح البرنامج، وكمان كإشعار على الموبايل لو البرنامج مفتوح في الخلفية.</div>
           <div class="lbl" style="margin-top:0">نبّهني لو عدّى من غير ما أسجل أي حاجة (بالساعات)</div>
@@ -444,6 +455,7 @@ function getOwner(){try{return JSON.parse(localStorage.getItem(OWNER_KEY))}catch
   </div>
 </div>
 
+<button class="fab" id="fabMic" title="قول بصوتك"><svg class="i"><use href="#i-mic"/></svg></button>
 <div id="sheetBg" class="sheet-bg hidden"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 <div id="print"></div>
@@ -507,7 +519,7 @@ const dLong=t=>new Date(t).toLocaleDateString('ar-EG',{weekday:'long',day:'numer
 const dayStart=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
 function ago(t){const m=Math.round((Date.now()-t)/6e4);if(m<1)return 'دلوقتي';if(m<60)return `من ${m} دقيقة`;const h=Math.round(m/60);if(h<24)return `من ${h} ساعة`;return dShort(t)}
 
-function defaults(){return{settings:{shop:'صرافة',phone:'',buy:50,sell:50.5,low:0,dark:false,idle:2},shift:null,history:[],debts:[],rateLog:[],lastBackup:0,away:[],drafts:[],notified:{}}}
+function defaults(){return{settings:{shop:'صرافة',phone:'',buy:50,sell:50.5,low:0,dark:false,idle:2,voiceWait:5,voiceAuto:false,voiceSpeak:true},shift:null,history:[],debts:[],rateLog:[],lastBackup:0,away:[],drafts:[],notified:{}}}
 let S=(()=>{try{const r=JSON.parse(localStorage.getItem(KEY));if(r){const d=defaults();return Object.assign(d,r,{settings:Object.assign(d.settings,r.settings||{})})}}catch(e){}return defaults()})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('مش قادر أحفظ — نزّل نسخة احتياطية')}}
 
@@ -515,7 +527,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('
 let toastT;
 function toast(msg,action,fn){const t=$('#toast');t.innerHTML=`<span>${msg}</span>${action?`<button>${action}</button>`:''}`;if(action)t.querySelector('button').onclick=()=>{t.classList.remove('show');fn()};t.style.pointerEvents=action?'auto':'none';t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),action?6000:2600)}
 function sheet(title,body){$('#sheet').innerHTML=`<div class="sh-head"><h2>${title}</h2><button class="x" onclick="closeSheet()">${ic('x')}</button></div>${body}`;$('#sheetBg').classList.remove('hidden');$('#sheet').scrollTop=0}
-function closeSheet(){$('#sheetBg').classList.add('hidden');$('#sheet').innerHTML=''}
+function closeSheet(){try{if(typeof abortListen==='function')abortListen();clearTimeout(autoT)}catch(e){}$('#sheetBg').classList.add('hidden');$('#sheet').innerHTML=''}
 $('#sheetBg').addEventListener('mousedown',e=>{if(e.target.id==='sheetBg')closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 function vibrate(){try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}
@@ -1019,8 +1031,8 @@ function wordsToNum(s){ // "خمسه وخمسين الف" -> "55000"
     if(v===null){if(w0==='و'&&inNum)continue;flush();out.push(w0);continue}
     if(/^\d/.test(w0)&&inNum)flush(); // two separate numbers like "100 و 2"
     if(p){flush();pre=p}
-    if(v==='K'||v==='M'){const m=v==='K'?1000:1e6;total+=(cur||1)*m;cur=0;lastMul=m}
-    else if(v>=1000){const m=v>=1e6?1e6:1000;total+=(cur||1)*v;cur=0;lastMul=m}
+    if(v==='K'||v==='M'){const m=v==='K'?1000:1e6;if(cur<1000){total+=(cur||1)*m;cur=0}lastMul=m}
+    else if(v>=1000&&!/^\d/.test(w0)){const m=v>=1e6?1e6:1000;if(cur<1000){total+=(cur||1)*v;cur=0}lastMul=m}
     else if(v<1){if(!cur&&total)total+=lastMul*v;else cur+=v}
     else if(v===100&&cur>0&&cur<10)cur*=100;
     else cur+=v;
@@ -1051,111 +1063,324 @@ function origName(name,raw){ // give the name back its original spelling (أحم
   const tk=String(raw).split(/\s+/);
   return name.split(' ').map(w=>{for(const t0 of tk){const t=t0.replace(/[،,.؟?!]/g,''),nt=normAr(t);if(nt.length===t.length&&nt.endsWith(w)&&nt.length-w.length<=2)return t.slice(t.length-w.length)}return w}).join(' ');
 }
-function parseVoice(raw){
-  let n=wordsToNum(normAr(raw).replace(/(^|\s)و?ورقتين(?=\s|$)/g,'$1 2 ورقه').replace(/(^|\s)و?ورقه واحده(?=\s|$)/g,'$1 1 ورقه'));const R={raw,text:n,bills:{},usd:0,manual:0,egp:0,rate:0,name:'',actual:null,debtOn:0,debtFor:0,type:'',note:''};
-  const NUM='(\\d+(?:\\.\\d+)?)';
-  const take=(re,fn)=>{n=n.replace(re,(...a)=>{fn(...a);return ' '}).replace(/\s+/g,' ')};
-  // type
-  if(/(مصروف|مصاريف|صرفت\s+\d+\s+(على|علي)|دفعت\s+\d+\s*(جنيه)?\s*(على|علي|في|حق)\s)/.test(n))R.type='exp';
-  else if(/(سبت|سايب|سيبت|سلفت|سلفه|امانه|اديته\s+امانه)/.test(n)&&/(عند|ل|سلف)/.test(n))R.type='away';
-  else if(/(بعت|بيعت|بعتله|بعتلها|سلمت|اديت|اديته|اديتها|ادتله|اشتري مني|اشترى مني|اشترت مني|خد مني|اخد مني|خدت منه مصري|شري مني)/.test(n))R.type='sell';
-  else if(/(اشتريت|اشتريتها|استلمت|خدت|اخدت|جالي|جابلي|باعلي|باعتلي|باع لي|باعت لي|غيرت|غيرتله|غيرتلها|فكيت|صرفت|صرفتله|شريت|شاريت)/.test(n))R.type='buy';
-  // remaining / actual
-  take(new RegExp('(?:باقي|فاضل|لسه)\\s*(?:عليه|عليها|عليهم|علي)\\s*'+NUM),(m,a)=>R.debtOn=+a);
-  take(new RegExp('(?:باقي|فاضل|لسه)\\s*(?:ليه|له|ليها|لها|ليهم)\\s*'+NUM),(m,a)=>R.debtFor=+a);
-  take(new RegExp('(?:باقيله|باقيلها|فاضله|فاضلها)\\s*'+NUM),(m,a)=>R.debtFor=+a);
-  take(new RegExp('(?:باقيعليه)\\s*'+NUM),(m,a)=>R.debtOn=+a);
-  take(new RegExp('(?:دفعلي|اداني|ادالي|دفع|ادتني|دفعت)\\s*'+NUM+'(?:\\s*(?:جنيه|جنيهات|مصري|ج))?\\s*بس'),(m,a)=>R.actual=+a);
-  // bills: "10 ورقات" (+ optional denomination)
-  const extra=[];
-  take(new RegExp(NUM+'\\s*(?:ورقه|ورقات|ورق|ورقه)\\s*(?:(?:فئه|ام|من ام|بتاع|ابو|ال)\\s*)?(?:'+NUM+')?(?!\\s*(?:جنيه|جنيهات|مصري))','g'),(m,c,d)=>{const den=DEN.includes(+d)?+d:100;R.bills[den]=(R.bills[den]||0)+ +c;if(d&&!DEN.includes(+d))extra.push(d)});
-  if(extra.length)n+=' '+extra.join(' ');
-  take(new RegExp('(?:ورقه|ورقات|ورق)\\s*(?:فئه|ام|ابو)?\\s*'+NUM+'\\s*(?:عدد|عددهم)?\\s*'+NUM+'?'),(m,d,c)=>{if(DEN.includes(+d)&&c){R.bills[+d]=(R.bills[+d]||0)+ +c}});
-  // dollars
-  take(new RegExp(NUM+'\\s*(?:دولار|دولارات|\\$)'),(m,a)=>R.manual+= +a);
-  take(new RegExp('\\$\\s*'+NUM),(m,a)=>R.manual+= +a);
-  // rate
-  take(new RegExp('(?:بسعر|سعر|السعر|سعره|بسعره)\\s*'+NUM),(m,a)=>R.rate=+a);
-  take(new RegExp('(?:الدولار|للدولار|كل دولار)\\s*(?:ب|بـ)\\s*'+NUM),(m,a)=>R.rate=+a);
-  // egp
-  take(new RegExp('(?:ب\\s*)?'+NUM+'\\s*(?:جنيه|جنيهات|ج|مصري|جنيه مصري)'),(m,a)=>R.egp=+a);
-  take(new RegExp('(?:^|\\s)ب\\s*'+NUM),(m,a)=>{if(+a<1000)R.rate=R.rate||+a;else R.egp=R.egp||+a});
-  // leftovers
-  const left=[...n.matchAll(/\d+(?:\.\d+)?/g)].map(x=>+x[0]);
-  const billsUsd=DEN.reduce((a,d)=>a+d*(R.bills[d]||0),0);
-  if(R.type==='exp'||R.type==='away'){
-    R.amount=R.egp||R.manual||left[0]||0;R.cur=R.manual&&!R.egp?'usd':'egp';
-    const nt=raw.match(/(?:على|علي|عشان|حق|في)\s+(.+)$/);R.note=R.type==='exp'&&nt?nt[1].replace(/[\d٠-٩]+.*$/,'').trim():'';
-    if(R.type==='away'){const m=normAr(raw).match(/عند\s+([^\s\d]{2,}(?:\s[^\s\d]{2,})?)/);R.name=origName(m?m[1].split(' ').filter(w=>!STOP.has(w))[0]||'':findName(R.text),raw)}
-    return R;
-  }
-  if(!billsUsd&&!R.manual&&left.length){const a=left.shift();if(a<=100000)R.manual=a}
-  if(!R.egp&&left.length){const a=left.find(x=>x>=1000);if(a)R.egp=a}
-  if(!R.rate&&left.length){const a=left.find(x=>x>5&&x<500);if(a)R.rate=a}
-  R.usd=r2(billsUsd+R.manual);
-  if(!R.type)R.type='buy';
-  if(R.usd&&R.egp&&!R.rate)R.rate=r2(R.egp/R.usd);
-  if(R.usd&&!R.rate)R.rate=R.type==='buy'?S.settings.buy:S.settings.sell;
-  if(!R.egp&&R.usd)R.egp=r2(R.usd*R.rate);
-  if(R.egp&&R.rate&&!R.usd){R.manual=r2(R.egp/R.rate);R.usd=R.manual}
-  if(R.debtOn){R.actual=R.type==='sell'?r2(R.egp-R.debtOn):r2(R.egp+R.debtOn)}
-  if(R.debtFor){R.actual=R.type==='buy'?r2(R.egp-R.debtFor):r2(R.egp+R.debtFor)}
-  R.name=origName(findName(R.text),raw);
+const NUMRE='(\\d+(?:\\.\\d+)?)';
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function prepText(raw){return wordsToNum(normAr(raw).replace(/(^|\s)و?ورقتين(?=\s|$)/g,'$1 2 ورقه').replace(/(^|\s)و?ورقه واحده(?=\s|$)/g,'$1 1 ورقه'))}
+function grabMoney(n){ // bills / dollars / pounds / rate out of one sentence
+  const R={bills:{},manual:0,egp:0,rate:0};let s=' '+n+' ';const extra=[];
+  const take=(re,fn)=>{s=s.replace(re,(...a)=>{fn(...a);return ' '}).replace(/\s+/g,' ')};
+  take(new RegExp(NUMRE+'\\s*(?:ورقه|ورقات|ورق)\\s*(?:(?:فئه|ام|من ام|بتاع|ابو|ال)\\s*)?(?:'+NUMRE+')?(?!\\s*(?:جنيه|جنيهات|مصري))','g'),(m,c,d)=>{const den=DEN.includes(+d)?+d:100;R.bills[den]=(R.bills[den]||0)+ +c;if(d&&!DEN.includes(+d))extra.push(d)});
+  if(extra.length)s+=' '+extra.join(' ')+' ';
+  take(new RegExp('(?:ورقه|ورقات|ورق)\\s*(?:فئه|ام|ابو)?\\s*'+NUMRE+'\\s*(?:عدد|عددهم)?\\s*'+NUMRE,'g'),(m,d,c)=>{if(DEN.includes(+d))R.bills[+d]=(R.bills[+d]||0)+ +c});
+  take(new RegExp(NUMRE+'\\s*(?:دولار|دولارات|\\$)','g'),(m,a)=>R.manual+= +a);
+  take(new RegExp('\\$\\s*'+NUMRE,'g'),(m,a)=>R.manual+= +a);
+  take(new RegExp('(?:بسعر|سعر|السعر|سعره|بسعره)\\s*(?:ب\\s*)?'+NUMRE),(m,a)=>R.rate=+a);
+  take(new RegExp('(?:الدولار|للدولار|كل دولار)\\s*ب\\s*'+NUMRE),(m,a)=>R.rate=+a);
+  take(new RegExp('(?:ب\\s*)?'+NUMRE+'\\s*(?:جنيه|جنيهات|ج|مصري)(?=\\s|$)'),(m,a)=>R.egp=+a);
+  R.usd=r2(DEN.reduce((a,d)=>a+d*(R.bills[d]||0),0)+R.manual);
+  R.rest=s.trim();R.left=[...s.matchAll(/\d+(?:\.\d+)?/g)].map(x=>+x[0]);
   return R;
 }
-let REC=null,vResult=null;
+function amountOf(M){if(M.usd)return{cur:'usd',amount:M.usd};if(M.egp)return{cur:'egp',amount:M.egp};const a=M.left.find(x=>x>0);return{cur:'egp',amount:a||0}}
+const allNames=()=>[...new Set([...customers().map(c=>c.name),...S.away.map(a=>a.name),...S.debts.map(d=>d.name)])];
+function nameIn(n,list){
+  const L=[...new Set(list)].map(x=>({x,k:normAr(x)})).filter(c=>c.k.length>1).sort((a,b)=>b.k.length-a.k.length);
+  for(const c of L)if(new RegExp('(?:^|\\s)(?:ل|لل|مع|من|عند|و|ب)?'+reEsc(c.k)+'(?=\\s|$)').test(' '+n+' '))return c.x;
+  return '';
+}
+const TX_VERBS=/(غيرت|بعت|بيعت|اشتريت|استلمت|سلمت|خدت|اخدت|جالي|باعلي|شريت|اديت|فكيت|صرفت|ورق|دولار)/;
+
+function parseTx(n,raw){
+  const R={kind:'tx',raw,bills:{},usd:0,manual:0,egp:0,rate:0,name:'',actual:null,type:''};
+  let s=n;const take=(re,fn)=>{s=s.replace(re,(...a)=>{fn(...a);return ' '}).replace(/\s+/g,' ')};
+  if(/(بعت|بيعت|بعتله|بعتلها|سلمت|اديت|اديته|اديتها|ادتله|اشتري مني|اشترى مني|اشترت مني|خد مني|اخد مني|شري مني)/.test(s))R.type='sell';
+  else if(/(اشتريت|اشتريتها|استلمت|خدت|اخدت|جالي|جابلي|باعلي|باعتلي|باع لي|باعت لي|غيرت|غيرتله|غيرتلها|فكيت|صرفت|صرفتله|شريت)/.test(s))R.type='buy';
+  let dOn=0,dFor=0;
+  take(new RegExp('(?:باقي|فاضل|لسه)\\s*(?:عليه|عليها|عليهم|علي)\\s*'+NUMRE),(m,a)=>dOn=+a);
+  take(new RegExp('(?:باقي|فاضل|لسه)\\s*(?:ليه|له|ليها|لها|ليهم)\\s*'+NUMRE),(m,a)=>dFor=+a);
+  take(new RegExp('(?:باقيله|باقيلها|فاضله|فاضلها)\\s*'+NUMRE),(m,a)=>dFor=+a);
+  take(new RegExp('(?:دفعلي|اداني|ادالي|دفع|ادتني|دفعت|دفعتله)\\s*'+NUMRE+'(?:\\s*(?:جنيه|جنيهات|مصري|ج))?\\s*بس'),(m,a)=>R.actual=+a);
+  const M=grabMoney(s);Object.assign(R,{bills:M.bills,manual:M.manual,egp:M.egp,rate:M.rate});s=M.rest;
+  take(new RegExp('(?:^|\\s)ب\\s*'+NUMRE),(m,a)=>{if(+a<1000)R.rate=R.rate||+a;else R.egp=R.egp||+a});
+  take(new RegExp('(?:على|علي)\\s*'+NUMRE),(m,a)=>{if(+a<500)R.rate=R.rate||+a});
+  const left=[...s.matchAll(/\d+(?:\.\d+)?/g)].map(x=>+x[0]);
+  const billsUsd=DEN.reduce((a,d)=>a+d*(R.bills[d]||0),0);
+  if(!billsUsd&&!R.manual&&left.length){const a=left.shift();if(a<=100000)R.manual=a}
+  if(!R.egp){const a=left.find(x=>x>=1000);if(a)R.egp=a}
+  if(!R.rate){const a=left.find(x=>x>5&&x<500);if(a)R.rate=a}
+  R.usd=r2(billsUsd+R.manual);
+  if(!R.usd&&!R.egp)return{kind:'unknown',raw};
+  if(!R.type)R.type='buy';
+  if(R.usd&&R.egp&&!R.rate)R.rate=r2(R.egp/R.usd);
+  if(!R.rate)R.rate=R.type==='buy'?S.settings.buy:S.settings.sell;
+  if(!R.usd&&R.egp){R.manual=r2(R.egp/R.rate);R.usd=R.manual}
+  if(!R.egp)R.egp=r2(R.usd*R.rate);
+  const due=r2(R.usd*R.rate);
+  if(dOn)R.actual=R.type==='sell'?r2(due-dOn):r2(due+dOn);
+  if(dFor)R.actual=R.type==='buy'?r2(due-dFor):r2(due+dFor);
+  if(!dOn&&!dFor&&R.actual==null&&Math.abs(R.egp-due)>0.5&&R.egp)R.actual=R.egp;
+  R.name=nameIn(n,allNames())||origName(findName(n),raw);
+  return R;
+}
+
+function parseSeg(n,raw){
+  const has=re=>re.test(n);
+  // ---- commands
+  if(has(/(الغي|الغى|امسح|شيل|بوظت)\s*(اخر|اخري)\s*(عمليه|حاجه)/))return{kind:'undo'};
+  if(has(/(اقفل|قفل|اقفلي|نقفل)\s*(الورديه|اليوم|اليوميه|الحساب)/))return{kind:'close'};
+  if(has(/(ابدا|ابتدي|افتح|نبدا)\s*(اليوم|الورديه|يوم جديد)/)){const M=grabMoney(n);return{kind:'start',usd:M.usd,egp:M.egp||M.left.find(x=>x>=100)||0}}
+  if(has(/(^|\s)(جرد|اعمل جرد|عد الفلوس|اعد الفلوس)(\s|$)/))return{kind:'count'};
+  if(has(/(افتح|وريني|روح|وديني|اعرض|اعرضلي)/)){for(const [w,v] of [['فلوس بره','away'],['العملاء','cust'],['العمليات','ops'],['التقارير','rep'],['الاعدادات','set'],['الرئيسيه','home']])if(n.includes(w))return{kind:'nav',view:v,label:w}}
+  if(has(/(احسب|احسبلي|حاسبه|يجيبوا كام|يجيب كام|يطلعوا كام|يطلع كام|يعني كام|يساوي كام|يساووا كام|بكام)/)&&!has(/(غيرت|بعت|اشتريت|استلمت|سلمت)/)){const M=grabMoney(n);return{kind:'calc',usd:M.usd,egp:M.egp||(!M.usd?(M.left[0]||0):0)}}
+  if(has(/(سعر|الاسعار)/)&&!has(/(غيرت|بعت|اشتريت|استلمت|سلمت|خدت|ورق|دولار)/)){
+    const b=n.match(new RegExp('(?:شرا|الشرا|شراء|الشراء|بشتري|اشتري|نشتري)\\s*(?:ب\\s*)?'+NUMRE)),s2=n.match(new RegExp('(?:بيع|البيع|ببيع|نبيع)\\s*(?:ب\\s*)?'+NUMRE));
+    if(b||s2)return{kind:'rate',buy:b?+b[1]:S.settings.buy,sell:s2?+s2[1]:S.settings.sell};
+  }
+  if(has(/(كام|قد ايه|حسابه|حسابها|حساب)/)&&!has(/(غيرت|بعت|اشتريت|استلمت|سلمت|خدت|ضفت|حطيت|سحبت|سبت|مصروف|سدد|رجع)/)){
+    if(has(/(البيت|الدرج|معايا|الخزنه)/))return{kind:'query',what:'home'};
+    if(has(/(ربح|كسبت|المكسب|الربح)/))return{kind:'query',what:'profit'};
+    if(has(/(راس المال|راسمالي|كل فلوسي|فلوسي كلها)/))return{kind:'query',what:'capital'};
+    if(has(/بره/))return{kind:'query',what:'away'};
+    const nm=nameIn(n,allNames());if(nm)return{kind:'query',what:'person',name:nm};
+  }
+  // ---- home money in / out
+  if(has(/(البيت|الدرج|الخزنه)/)&&has(/(ضفت|حطيت|زودت|اضفت|ضيفت|ضيف|حط|دخلت|نزلت)/)){const a=amountOf(grabMoney(n));return{kind:'cash',sub:'add',...a}}
+  if(has(/(البيت|الدرج|الخزنه)/)&&has(/(سحبت|خدت|شلت|طلعت|اخدت|سحب)/)){const a=amountOf(grabMoney(n));return{kind:'cash',sub:'out',...a}}
+  // ---- money coming back from outside
+  const openAway=S.away.filter(a=>a.left>0);
+  if(has(/(رجعلي|رجعتلي|رجعهم|رجع|رجعت|ردلي|رد|ردهم|استرديت)/)||(has(/(استلمت|خدت)\s*(من)/)&&!TX_VERBS.test(n.replace(/(استلمت|خدت)/,'')))){
+    const nm=nameIn(n,openAway.map(a=>a.name));if(nm){const a=amountOf(grabMoney(n));return{kind:'awayBack',name:nm,cur:a.amount?a.cur:null,amount:a.amount}}
+  }
+  // ---- customer pays / I pay what was left
+  const openD=S.debts.filter(d=>d.amount);
+  if(has(/(سدد|سددلي|سددت|الباقي|باقيه|باقيها|خلص اللي عليه|دفع اللي عليه|دفعلي اللي عليه)/)&&!has(/(ورق|دولار)/)){
+    const nm=nameIn(n,openD.map(d=>d.name));if(nm){const a=amountOf(grabMoney(n));return{kind:'settle',name:nm,amount:a.cur==='egp'?a.amount:0}}
+  }
+  // ---- money left outside
+  if(has(/(بره|سبت|سايب|سيبت|سلفت|سلفه|امانه|ليا عند|لي عند|ليا فلوس|ليا معاه)/)&&has(/(عند|سلفت|معاه|معاها)/)){
+    const M=grabMoney(n),a=amountOf(M);const m=n.match(/(?:عند|معاه|معاها)\s+([^\s\d]{2,}(?:\s[^\s\d]{2,})?)/);
+    let name=m?(m[1].split(' ').filter(w=>!STOP.has(w)&&!/^(بره|امانه|سلفه|فلوس)$/.test(w))[0]||''):'';
+    if(TITLE.has(name)&&m){const w2=m[1].split(' ')[1];if(w2)name+=' '+w2}
+    if(!name)name=findName(n);
+    name=nameIn(name,allNames())||origName(name,raw);
+    const fromHome=has(/(سبت|سيبت|اديت|اديته|سلفت|ادتله|ادته|اديتها|سلفته)/)&&!has(/(ليا|لي عند)/);
+    return{kind:'away',name,...a,fromHome,why:has(/سلف/)?'سلفة':has(/امانه/)?'أمانة':''};
+  }
+  // ---- expense
+  if(has(/(مصروف|مصاريف|صرفت\s+(ب\s*)?\d+\s+(على|علي)|دفعت\s+\d+\s*(جنيه|ج)?\s*(على|علي|في|حق)\s)/)){
+    const a=amountOf(grabMoney(n));const nt=n.replace(/\d+(\.\d+)?/g,' ').match(/(?:على|علي|عشان|حق|في)\s+([^\d]+)$/);
+    return{kind:'exp',...a,note:nt?nt[1].replace(/\s+(جنيه|ج|مصري)\s*$/,'').trim():''};
+  }
+  return parseTx(n,raw);
+}
+function splitSegs(n){
+  const verbs='غيرت|بعت|بيعت|اشتريت|استلمت|سلمت|خدت|اخدت|مصروف|صرفت|سبت|ضفت|حطيت|سحبت|اديت|ليا|رجعلي|رجع|سدد|اقفل|الغي|امسح|وريني|كمان';
+  return n.split(new RegExp('\\s(?:وبعدين|بعدين|وكمان|وبعد كده|وبرضه)\\s|\\sو(?=(?:'+verbs+')(?:\\s|$))')).map(s=>s.trim()).filter(Boolean);
+}
+function parseAll(raw){const n=prepText(raw);return splitSegs(n).map(s=>parseSeg(s,raw))}
+// kept for older callers/tests
+function parseVoice(raw){const a=parseAll(raw)[0]||{kind:'unknown'};return a}
+
+/* ---------- speaking back */
+function say(text){
+  if(!S.settings.voiceSpeak||!('speechSynthesis' in window))return;
+  try{const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'').replace(/\$([\d,.]+)/g,'$1 دولار').replace(/([\d,.]+) ج/g,'$1 جنيه'));u.lang='ar-EG';u.rate=1.05;
+    const v=speechSynthesis.getVoices().find(v=>/^ar/i.test(v.lang));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}
+}
+
+/* ---------- listening: stays open until you finish */
+let LS=null,VA=[],autoT=null;
+const SRC=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
+function listen(){
+  const SR=SRC();if(!SR)return toast('المتصفح ده مش بيدعم الصوت — افتحه من Chrome');
+  if(LS)return stopListen();
+  clearTimeout(autoT);
+  LS={heard:'',cur:'',last:0,started:Date.now(),stopping:false};
+  const wait=(S.settings.voiceWait||5)*1000;
+  const ui=on=>{$('#vMic')?.classList.toggle('on',on);$('#vStop')?.classList.toggle('hidden',!on);if($('#vState'))$('#vState').textContent=on?'بسمعك… اتكلم براحتك، ولما تخلص اسكت شوية أو دوس "خلصت"':'دوس على المايك واتكلم';$('#fabMic')?.classList.toggle('on',on)};
+  const tick=()=>{if(!LS)return;const now=Date.now();
+    if(LS.last&&now-LS.last>wait)return stopListen();
+    if(!LS.last&&now-LS.started>Math.max(15000,wait*2))return stopListen();
+    if(now-LS.started>120000)return stopListen();
+    const bar=$('#vBar');if(bar)bar.style.width=(LS.last?Math.max(0,100-(now-LS.last)/wait*100):100)+'%';
+    LS.timer=setTimeout(tick,200)};
+  const run=()=>{
+    const r=new SR();LS.rec=r;r.lang='ar-EG';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+    r.onresult=e=>{if(!LS)return;let fin='',intr='';for(let i=0;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript+' ';else intr+=x[0].transcript+' '}
+      LS.cur=fin;LS.last=Date.now();const t=(LS.heard+' '+fin+intr).replace(/\s+/g,' ').trim();if($('#vText'))$('#vText').value=t};
+    r.onerror=e=>{if(!LS)return;if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('لازم تسمح للبرنامج يستخدم المايك');LS.stopping=true}else if(e.error==='network'){toast('التسجيل بالصوت محتاج نت');LS.stopping=true}};
+    r.onend=()=>{if(!LS)return;LS.heard=(LS.heard+' '+LS.cur).replace(/\s+/g,' ').trim();LS.cur='';if(!LS.stopping){try{run()}catch(x){finishListen()}}else finishListen()};
+    try{r.start()}catch(x){finishListen()}
+  };
+  ui(true);run();tick();LS.ui=ui;
+}
+function stopListen(){if(!LS)return;LS.stopping=true;clearTimeout(LS.timer);try{LS.rec.stop()}catch(e){finishListen()}setTimeout(()=>{if(LS&&LS.stopping)finishListen()},1500)}
+function abortListen(){if(!LS)return;LS.stopping=true;clearTimeout(LS.timer);const u=LS.ui;try{LS.rec.abort()}catch(e){}LS=null;u&&u(false)}
+function finishListen(){if(!LS)return;clearTimeout(LS.timer);const u=LS.ui;LS=null;u&&u(false);const t=($('#vText')?.value||'').trim();if(t)showParse(t)}
+
+/* ---------- the voice screen */
+const V_EX=[['عمليات','غيرت 10 ورقات لأحمد بـ 55 ألف جنيه','بعت 500 دولار لمحمد بسعر 55 وباقي عليه 2000','استلمت 3 ورقات 100 وورقتين 50 من الحاج سيد'],
+  ['فلوس بره','ليا فلوس بره عند معتز 20 ألف جنيه','سبت 5 ورقات عند خالد أمانة','معتز رجعلي 5000'],
+  ['فلوس البيت والمصروفات','ضفت في فلوس البيت 100 ألف جنيه','سحبت من البيت 2000','مصروف 150 جنيه على الغدا'],
+  ['العملاء','محمد سدد الباقي','أحمد سددلي 1000'],
+  ['أوامر وأسئلة','كام في البيت؟','الربح النهارده كام؟','محمد عليه كام؟','احسب 500 دولار','سعر الشرا 55 والبيع 55.5','الغي آخر عملية','اعمل جرد','اقفل الوردية'],
+  ['أكتر من حاجة مرة واحدة','غيرت 5 ورقات لأحمد بـ 27500 وبعدين بعت 300 دولار لسامي بسعر 56']];
 function voiceSheet(){
-  if(!S.shift)return toast('ابدأ اليوم الأول');
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  sheet('قول العملية بصوتك',`
-    ${SR?`<button class="bigmic" id="vMic">${ic('mic')}</button><div style="text-align:center;font-weight:600" id="vState">دوس على المايك واتكلم</div>`:`<div class="alert warn">${ic('alert')}المتصفح ده مش بيدعم التسجيل بالصوت — افتح البرنامج من Chrome. تقدر تكتبها بإيدك تحت.</div>`}
-    <textarea id="vText" rows="2" placeholder="أو اكتبها هنا بالعامية…" style="margin-top:12px;font-size:17px"></textarea>
+  const SR=SRC();
+  sheet('قول بصوتك',`
+    ${SR?`<button class="bigmic" id="vMic">${ic('mic')}</button><div style="text-align:center;font-weight:600" id="vState">دوس على المايك واتكلم</div>
+      <div style="height:4px;background:var(--soft);border-radius:4px;margin:10px 0 0;overflow:hidden"><div id="vBar" style="height:100%;width:0;background:var(--gold);transition:width .2s linear"></div></div>
+      <button class="btn danger xl hidden" id="vStop" style="margin-top:10px">${ic('check')}خلصت</button>`
+      :`<div class="alert warn">${ic('alert')}المتصفح ده مش بيدعم الصوت — افتحه من Chrome. تقدر تكتب بإيدك تحت.</div>`}
+    <textarea id="vText" rows="2" placeholder="أو اكتب هنا بالعامية…" style="margin-top:12px;font-size:17px"></textarea>
     <button class="btn xl" id="vGo" style="margin-top:8px">${ic('check')}افهم الكلام ده</button>
     <div id="vOut"></div>
-    <div class="vex" id="vEx"><b>أمثلة تقدر تقولها:</b><br>• غيرت 10 ورقات لأحمد بـ 55 ألف جنيه<br>• بعت 500 دولار لمحمد بسعر 55 وباقي عليه 2000<br>• استلمت 3 ورقات 100 و 2 ورقة 50 من الحاج سيد<br>• مصروف 150 جنيه على الغدا<br>• سبت 5000 جنيه عند خالد أمانة</div>`);
-  $('#vGo').onclick=()=>showParse($('#vText').value);
+    <details class="vex" id="vEx"><summary style="cursor:pointer;font-weight:700;color:var(--ink2)">إيه اللي أقدر أقوله؟</summary>
+      ${V_EX.map(([h,...xs])=>`<div style="margin-top:8px"><b>${h}</b>${xs.map(x=>`<div style="cursor:pointer" data-ex="${esc(x)}">• ${x}</div>`).join('')}</div>`).join('')}
+      <div style="margin-top:8px">ممكن تقول أكتر من حاجة ورا بعض وتفصل بينهم بـ "وبعدين".</div></details>`);
+  $('#vGo').onclick=()=>{abortListen();showParse($('#vText').value)};
+  $$('[data-ex]').forEach(x=>x.onclick=()=>{$('#vText').value=x.dataset.ex;abortListen();showParse(x.dataset.ex)});
   if(!SR)return;
-  $('#vMic').onclick=()=>{
-    if(REC){REC.stop();return}
-    REC=new SR();REC.lang='ar-EG';REC.interimResults=true;REC.continuous=false;REC.maxAlternatives=1;
-    let finalTxt='';
-    REC.onstart=()=>{$('#vMic')?.classList.add('on');$('#vState')&&($('#vState').textContent='بسمعك… اتكلم دلوقتي')};
-    REC.onresult=e=>{let t='';for(const r of e.results){t+=r[0].transcript;if(r.isFinal)finalTxt=t}if($('#vText'))$('#vText').value=t};
-    REC.onerror=e=>{const m={'not-allowed':'لازم تسمح للبرنامج يستخدم المايك','no-speech':'مسمعتش حاجة — جرّب تاني','network':'التسجيل بالصوت محتاج نت'}[e.error]||'حصلت مشكلة في التسجيل';toast(m)};
-    REC.onend=()=>{REC=null;$('#vMic')?.classList.remove('on');if(!$('#vState'))return;$('#vState').textContent='دوس على المايك واتكلم';const txt=$('#vText').value.trim();if(txt)showParse(txt)};
-    try{REC.start()}catch(e){REC=null;toast('مش قادر أشغّل المايك')}
-  };
-  setTimeout(()=>$('#vMic')?.click(),250);
+  $('#vMic').onclick=listen;$('#vStop').onclick=stopListen;
+  setTimeout(()=>{if(!LS&&$('#vMic'))listen()},250);
+}
+function findOpenAway(name){return S.away.filter(a=>a.left>0&&a.name===name).sort((a,b)=>a.t-b.t)}
+function debtsOf(name){return S.debts.filter(d=>d.amount&&d.name.trim()===name)}
+function actCard(a,i){
+  const kv=(x,y)=>`<div class="kv"><span>${x}</span><b class="n">${y}</b></div>`;let title='',body='',ok=true,cls='',flip=false,edit=true;
+  if(a.kind==='tx'){
+    title=TT[a.type];cls=a.type;flip=true;ok=a.usd>0;
+    const bills=DEN.filter(d=>a.bills[d]).map(d=>`${a.bills[d]} ورقة ${d}$`).join(' + ');
+    const due=r2(a.usd*a.rate),act=a.actual??due,debt=a.type==='buy'?r2(act-due):r2(due-Math.min(act,due));
+    body=(bills?kv('الورق',bills):'')+kv('الدولار',ok?U(a.usd):'<span class="neg">مفهمتش المبلغ</span>')+kv('السعر',fmt(a.rate))+kv('الإجمالي',E(due))+(a.name?kv('العميل',esc(a.name)):'')+(a.actual!=null?kv(a.type==='buy'?'دفعت':'استلمت',E(a.actual)):'');
+    if(debt)body+=kv(debt>0?'متبقي على العميل':'متبقي للعميل',E(Math.abs(debt)));
+    if(debt&&!a.name){ok=false;body+=`<div class="neg" style="font-size:14px;margin-top:6px">فيه متبقي — لازم اسم العميل. دوس "عدّل".</div>`}
+    if(a.rate<5||a.rate>500){ok=false;body+=`<div class="neg" style="font-size:14px;margin-top:6px">السعر شكله غلط — دوس "عدّل".</div>`}
+  }else if(a.kind==='exp'){title='مصروف';cls='exp';ok=a.amount>0;body=kv('المبلغ',money(a.cur,a.amount))+(a.note?kv('على',esc(a.note)):'')}
+  else if(a.kind==='cash'){title=a.sub==='add'?'حطيت فلوس في البيت':'سحبت فلوس من البيت';cls='exp';ok=a.amount>0;body=kv('المبلغ',money(a.cur,a.amount))}
+  else if(a.kind==='away'){title='فلوس بره';cls='away';ok=a.amount>0&&!!a.name;
+    body=kv('عند',a.name?esc(a.name):'<span class="neg">مفهمتش الاسم</span>')+kv('المبلغ',a.amount?money(a.cur,a.amount):'<span class="neg">مفهمتش المبلغ</span>')+(a.why?kv('ليه',a.why):'')+
+      `<label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px"><input type="checkbox" data-fh="${i}" ${a.fromHome?'checked':''} style="width:18px;height:18px"> الفلوس دي طلعت من البيت النهارده</label>`}
+  else if(a.kind==='awayBack'){const items=findOpenAway(a.name),tot=items.reduce((x,y)=>x+y.left,0),cur=items[0]?.cur||'egp';
+    if(!a.amount||a.cur!==cur){a.amount=tot;a.cur=cur}a.amount=Math.min(a.amount,tot);title='رجعتلك فلوس من بره';cls='away';ok=a.amount>0;
+    body=kv('من',esc(a.name))+kv('رجع',money(a.cur,a.amount))+kv('كان بره',money(cur,tot))+(tot-a.amount?kv('لسه بره',money(cur,r2(tot-a.amount))):'')}
+  else if(a.kind==='settle'){const ds=debtsOf(a.name),tot=r2(ds.reduce((x,d)=>x+d.amount,0));a.dir=tot>0?'in':'out';if(!a.amount)a.amount=Math.abs(tot);a.amount=Math.min(a.amount,Math.abs(tot));
+    title=tot>0?'العميل سدد':'دفعت للعميل باقيه';cls='buy';ok=a.amount>0;body=kv('العميل',esc(a.name))+kv('المبلغ',E(a.amount))+kv(tot>0?'كان عليه':'كان ليه',E(Math.abs(tot)))+(Math.abs(tot)-a.amount?kv('لسه',E(r2(Math.abs(tot)-a.amount))):'')}
+  else if(a.kind==='rate'){title='تغيير الأسعار';cls='sell';body=kv('شراء',fmt(a.buy))+kv('بيع',fmt(a.sell));ok=a.buy>0&&a.sell>0;edit=false}
+  else if(a.kind==='undo'){const l=S.shift&&S.shift.tx[S.shift.tx.length-1];title='إلغاء آخر عملية';cls='exp';ok=!!l;edit=false;body=l?txRow(Object.assign({},l)):'<div class="empty">مفيش عمليات</div>';a.txId=l&&l.id}
+  else{title='مفهمتش الجملة دي';ok=false;edit=false;body=`<div style="font-size:14px;color:var(--muted)">"${esc(a.raw||'')}" — قولها تاني بشكل أوضح، أو بص على الأمثلة.</div>`}
+  a.ok=ok;
+  return `<div class="vcard ${cls}" data-card="${i}"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:17px;flex:1">${a.done?'✓ ':''}${title}</b>
+    ${flip?`<button class="btn sm ghost" data-flip="${i}">${ic('swap','width:16px')} اعكس</button>`:''}<button class="x" data-rm="${i}" style="width:32px;height:32px">${ic('x','width:16px')}</button></div>${body}
+    <div class="btns" style="margin-top:12px">${ok?`<button class="btn ${cls==='sell'?'sell':cls==='buy'?'buy':'primary'}" data-run="${i}">${ic('check')}${a.kind==='undo'?'الغيها':'سجّلها'}</button>`:''}${edit?`<button class="btn" data-ed="${i}">${ic('edit')}عدّل</button>`:''}</div></div>`;
 }
 function showParse(txt){
-  txt=(txt||'').trim();if(!txt)return toast('قول أو اكتب العملية الأول');
-  const R=parseVoice(txt);vResult=R;$('#vEx')?.classList.add('hidden');
-  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b class="n">${b}</b></div>`;let body='',ok=true,title='';
-  if(R.type==='exp'){title='مصروف';ok=R.amount>0;body=kv('المبلغ',money(R.cur,R.amount))+(R.note?kv('على',esc(R.note)):'')}
-  else if(R.type==='away'){title='فلوس سايبها بره';ok=R.amount>0&&R.name;body=kv('عند',R.name?esc(R.name):'<span class="neg">مفهمتش الاسم</span>')+kv('المبلغ',money(R.cur,R.amount))}
-  else{
-    title=TT[R.type];ok=R.usd>0;
-    const bills=DEN.filter(d=>R.bills[d]).map(d=>`${R.bills[d]} ورقة ${d}$`).join(' + ');
-    body=(bills?kv('الورق',bills):'')+kv('الدولار',ok?U(R.usd):'<span class="neg">مفهمتش المبلغ</span>')+kv('السعر',fmt(R.rate))+kv('الإجمالي',E(r2(R.usd*R.rate)))+(R.name?kv('العميل',esc(R.name)):'')+(R.actual!=null?kv(R.type==='buy'?'دفعت':'استلمت',E(R.actual)):'');
-    const due=r2(R.usd*R.rate),act=R.actual??due,debt=R.type==='buy'?r2(act-due):r2(due-Math.min(act,due));
-    if(debt)body+=kv(debt>0?'متبقي على العميل':'متبقي للعميل',E(Math.abs(debt)));
-    if(debt&&!R.name){ok=false;body+=`<div class="neg" style="font-size:14px;margin-top:6px">فيه متبقي — لازم اسم العميل. دوس "عدّل" واكتبه.</div>`}
-    if(R.rate&&(R.rate<5||R.rate>500))body+=`<div class="neg" style="font-size:14px;margin-top:6px">السعر شكله غلط — راجعه.</div>`;
-  }
-  $('#vOut').innerHTML=`<div class="vcard ${R.type}"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:17px;flex:1">${R.type==='buy'?ic('down','width:18px;vertical-align:-3px;color:var(--buy)'):R.type==='sell'?ic('up','width:18px;vertical-align:-3px;color:var(--sell)'):''} فهمت: ${title}</b>
-    ${R.type==='buy'||R.type==='sell'?`<button class="btn sm ghost" id="vFlip">${ic('swap','width:16px')} اعكس</button>`:''}</div>${body}
-    <div class="btns" style="margin-top:12px">${ok?`<button class="btn ${R.type==='sell'?'sell':R.type==='buy'?'buy':'primary'}" id="vSave">${ic('check')}سجّلها</button>`:''}<button class="btn" id="vEdit">${ic('edit')}عدّل</button></div></div>`;
-  if($('#vFlip'))$('#vFlip').onclick=()=>{const keep=R.rate;R.type=R.type==='buy'?'sell':'buy';$('#vText').value=txt;const RR=Object.assign(parseVoice(txt),{type:R.type});if(!/(بسعر|سعر)/.test(normAr(txt))&&!RR.egp)RR.rate=R.type==='buy'?S.settings.buy:S.settings.sell;vResult=RR;showParseObj(RR,txt)};
-  $('#vEdit').onclick=()=>applyVoice(R,false);
-  if($('#vSave'))$('#vSave').onclick=()=>applyVoice(R,true);
+  txt=(txt||'').trim();if(!txt)return toast('قول أو اكتب حاجة الأول');
+  $('#vEx')?.removeAttribute('open');
+  const acts=parseAll(txt),instant=acts.filter(a=>['nav','close','count','calc','query','start'].includes(a.kind));
+  VA=acts.filter(a=>!instant.includes(a));
+  for(const a of instant)runInstant(a);
+  if(!VA.length)return;
+  if(!S.shift&&VA.some(a=>a.kind!=='rate')){$('#vOut').innerHTML=`<div class="alert warn" style="margin-top:12px">${ic('alert')}ابدأ اليوم الأول — قول "ابدأ اليوم"</div>`;return}
+  drawCards();
+  if(S.settings.voiceAuto&&VA.every(a=>a.ok))startAuto();
 }
-function showParseObj(R,txt){const orig=parseVoice;parseVoice=()=>R;try{showParse(txt)}finally{parseVoice=orig}}
-function applyVoice(R,direct){
-  if(R.type==='exp'){cashSheet('exp',{amount:R.amount,note:R.note});if(R.cur==='usd')$$('#mCur button')[1]?.click();if(direct)$('#mSave').click();return}
-  if(R.type==='away'){awaySheet({name:R.name,amount:R.amount,cur:R.cur});if(direct)$('#wSave').click();return}
-  const bills={};DEN.forEach(d=>{if(R.bills[d])bills[d]=R.bills[d]});
-  newTx(R.type,{bills:Object.keys(bills).length?bills:null,manual:R.manual||0,amount:Object.keys(bills).length?0:0,rate:R.rate,name:R.name,actual:R.actual,voice:R.raw});
-  if(direct)saveTx();
+function drawCards(){
+  const out=$('#vOut');if(!out)return;
+  out.innerHTML=VA.map(actCard).join('')+(VA.length>1&&VA.some(a=>a.ok)?`<button class="btn primary xl" id="vAll" style="margin-top:12px">${ic('check')}سجّل الكل (${VA.filter(a=>a.ok).length})</button>`:'')+`<div id="vAuto"></div>`;
+  out.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runActs([VA[+b.dataset.run]]));
+  out.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{clearTimeout(autoT);VA.splice(+b.dataset.rm,1);drawCards()});
+  out.querySelectorAll('[data-flip]').forEach(b=>b.onclick=()=>{clearTimeout(autoT);const a=VA[+b.dataset.flip];a.type=a.type==='buy'?'sell':'buy';if(!/(سعر|ب \d)/.test(prepText(a.raw||''))&&a.rate===(a.type==='buy'?S.settings.sell:S.settings.buy))a.rate=a.type==='buy'?S.settings.buy:S.settings.sell;drawCards()});
+  out.querySelectorAll('[data-fh]').forEach(c=>c.onchange=()=>{VA[+c.dataset.fh].fromHome=c.checked});
+  out.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editAct(VA[+b.dataset.ed]));
+  $('#vAll')&&($('#vAll').onclick=()=>runActs(VA.filter(a=>a.ok)));
+}
+function startAuto(){
+  let n=3;const tickA=()=>{const box=$('#vAuto');if(!box)return;if(n===0){runActs(VA.filter(a=>a.ok));return}
+    box.innerHTML=`<div class="remain info" style="margin-top:12px">${ic('clock')}<span>هتتسجل لوحدها خلال ${n}…</span><button class="btn sm" onclick="clearTimeout(autoT);this.closest('.remain').remove()">إلغاء</button></div>`;n--;autoT=setTimeout(tickA,1000)};
+  tickA();
+}
+function editAct(a){
+  clearTimeout(autoT);abortListen();
+  if(a.kind==='tx'){const bills={};DEN.forEach(d=>{if(a.bills[d])bills[d]=a.bills[d]});newTx(a.type,{bills:Object.keys(bills).length?bills:null,manual:a.manual||0,rate:a.rate,name:a.name,actual:a.actual,voice:a.raw})}
+  else if(a.kind==='exp'){cashSheet('exp',{amount:a.amount,note:a.note});if(a.cur==='usd')$$('#mCur button')[1]?.click()}
+  else if(a.kind==='cash'){cashSheet('add',{amount:a.amount});if(a.sub==='out')$$('#mSub button')[1]?.click();if(a.cur==='usd')$$('#mCur button')[1]?.click()}
+  else if(a.kind==='away')awaySheet({name:a.name,amount:a.amount,cur:a.cur});
+  else if(a.kind==='awayBack'){const it=findOpenAway(a.name)[0];if(it)awayReturn(it.id)}
+  else if(a.kind==='settle'){const d=debtsOf(a.name)[0];if(d)settle(d.id)}
+}
+function runInstant(a){
+  const sh=S.shift,s=sh?summarize(sh):null;let msg='';
+  if(a.kind==='nav'){closeSheet();go(a.view);say('حاضر');return}
+  if(a.kind==='close'){if(!sh)return toast('مفيش وردية مفتوحة');closeShiftSheet();say('عدّ الفلوس اللي في البيت واكتبها');return}
+  if(a.kind==='count'){if(!sh)return toast('مفيش وردية مفتوحة');countSheet();return}
+  if(a.kind==='start'){
+    if(sh){msg='الوردية شغالة من '+tm(sh.openedAt)}
+    else{const l=S.history[0];S.shift={id:uid(),openedAt:Date.now(),open:{usd:a.usd||(l&&l.actual?l.actual.usd:0),egp:a.egp||(l&&l.actual?l.actual.egp:0)},openCost:S.settings.buy,tx:[]};save();render();msg='صباح الخير — اليوم بدأ بـ '+U(S.shift.open.usd)+' و '+E(S.shift.open.egp)}
+  }
+  if(a.kind==='calc'){
+    if(a.usd)msg=`${U(a.usd)} = ${E(a.usd*S.settings.buy)} بسعر الشراء، و ${E(a.usd*S.settings.sell)} بسعر البيع`;
+    else if(a.egp)msg=`${E(a.egp)} = ${U(Math.floor(a.egp/S.settings.sell*100)/100)} بسعر البيع، و ${U(Math.floor(a.egp/S.settings.buy*100)/100)} بسعر الشراء`;
+    else msg='قول المبلغ، مثلاً: احسب 500 دولار';
+  }
+  if(a.kind==='query'){
+    if(a.what==='home')msg=s?`في البيت دلوقتي ${U(s.usd)} و ${E(s.egp)}`:'الوردية مقفولة';
+    if(a.what==='profit')msg=s?`ربح الوردية لحد دلوقتي ${E(s.net)}`:'الوردية مقفولة';
+    if(a.what==='away'){const aw=awayOpen(),u=aw.filter(x=>x.cur==='usd').reduce((x,y)=>x+y.left,0),e=aw.filter(x=>x.cur==='egp').reduce((x,y)=>x+y.left,0);msg=aw.length?`فلوس بره: ${U(u)} و ${E(e)} عند ${aw.length} ${aw.length>2?'أشخاص':'شخص'}`:'مفيش فلوس بره'}
+    if(a.what==='capital'){const aw=awayOpen(),o=S.debts.filter(d=>d.amount).reduce((x,d)=>x+d.amount,0);const u=(s?s.usd:0)+aw.filter(x=>x.cur==='usd').reduce((x,y)=>x+y.left,0),e=(s?s.egp:0)+aw.filter(x=>x.cur==='egp').reduce((x,y)=>x+y.left,0)+o;msg=`رأس مالك كله ${U(u)} و ${E(e)}`}
+    if(a.what==='person'){const bal=r2(debtsOf(a.name).reduce((x,d)=>x+d.amount,0)),aw=findOpenAway(a.name);const parts=[];
+      if(bal>0)parts.push(`عليه ${E(bal)}`);if(bal<0)parts.push(`ليه عندك ${E(-bal)}`);if(aw.length)parts.push(`وعنده فلوس بره ${aw.map(x=>money(x.cur,x.left)).join(' و ')}`);
+      msg=`${a.name}: `+(parts.length?parts.join(' '):'حسابه خالص')}
+  }
+  if(msg){const out=$('#vOut');if(out)out.insertAdjacentHTML('beforeend',`<div class="remain info" style="margin-top:12px">${ic(a.kind==='calc'?'calc':'check')}<span>${msg}</span></div>`);say(msg)}
+}
+function runActs(list){
+  clearTimeout(autoT);abortListen();
+  const done=[],undo={tx:[],away:[],rate:null,settle:[]};
+  for(const a of list){
+    if(!a.ok||a.done)continue;
+    try{
+      if(a.kind==='tx'){
+        const due=r2(a.usd*a.rate),act=a.actual??due;let cash,change=0,debt;
+        if(a.type==='buy'){cash=act;debt=r2(act-due)}else{change=r2(Math.max(0,act-due));cash=r2(Math.min(act,due));debt=r2(due-cash)}
+        const bills={};DEN.forEach(d=>bills[d]=a.bills[d]||0);const c=a.name?customers().find(x=>x.name===a.name):null;
+        const tx={id:uid(),t:Date.now(),type:a.type,bills,manual:a.manual||0,billsCount:DEN.reduce((x,d)=>x+bills[d],0),usd:a.usd,rate:a.rate,due,cash,change,debt,name:a.name||'',phone:c&&c.phone||'',note:'',voice:a.raw};
+        pushTx(tx);undo.tx.push(tx.id);
+        if(debt)S.debts.push({id:uid(),txId:tx.id,t:tx.t,name:tx.name,phone:tx.phone,original:debt,amount:debt,payments:[]});
+        done.push(`${TT[a.type]} ${U(a.usd)}${a.name?' — '+a.name:''}`);
+      }else if(a.kind==='exp'){const id=uid();pushTx({id,t:Date.now(),type:'cash',sub:'exp',cur:a.cur,amount:a.amount,note:a.note||''});undo.tx.push(id);done.push(`مصروف ${money(a.cur,a.amount)}`)}
+      else if(a.kind==='cash'){const id=uid();pushTx({id,t:Date.now(),type:'cash',sub:a.sub,cur:a.cur,amount:a.amount,note:'بالصوت'});undo.tx.push(id);done.push(`${a.sub==='add'?'حطيت في البيت':'سحبت من البيت'} ${money(a.cur,a.amount)}`)}
+      else if(a.kind==='away'){const it={id:uid(),t:Date.now(),name:a.name,cur:a.cur,amount:a.amount,left:a.amount,why:a.why||'',note:'',due:'',returns:[]};S.away.push(it);undo.away.push(it.id);
+        if(a.fromHome){const id=uid();pushTx({id,t:Date.now(),type:'away',dir:'out',cur:a.cur,amount:a.amount,awayId:it.id,name:a.name});undo.tx.push(id)}
+        done.push(`فلوس بره عند ${a.name}: ${money(a.cur,a.amount)}`)}
+      else if(a.kind==='awayBack'){let rest=a.amount;for(const it of findOpenAway(a.name)){if(rest<=0)break;const v=r2(Math.min(rest,it.left));const id=uid();pushTx({id,t:Date.now(),type:'away',dir:'in',cur:it.cur,amount:v,awayId:it.id,name:it.name});undo.tx.push(id);it.left=r2(it.left-v);it.returns.push({t:Date.now(),amount:v,txId:id});if(!it.left)it.doneAt=Date.now();rest=r2(rest-v)}
+        done.push(`رجعلك من ${a.name} ${money(a.cur,a.amount)}`)}
+      else if(a.kind==='settle'){let rest=a.amount;for(const d of debtsOf(a.name)){if(rest<=0)break;const v=r2(Math.min(rest,Math.abs(d.amount))),egp=d.amount>0?v:-v,id=uid();d.amount=r2(d.amount-egp);d.payments=d.payments||[];d.payments.push({t:Date.now(),egp,txId:id});if(!d.amount)d.paidAt=Date.now();pushTx({id,t:Date.now(),type:'settle',debtId:d.id,egp,name:d.name,phone:d.phone});undo.tx.push(id);rest=r2(rest-v)}
+        done.push(`${a.dir==='in'?'سدد':'دفعتله'} ${a.name} ${E(a.amount)}`)}
+      else if(a.kind==='rate'){undo.rate={buy:S.settings.buy,sell:S.settings.sell};S.settings.buy=a.buy;S.settings.sell=a.sell;S.rateLog.push({t:Date.now(),buy:a.buy,sell:a.sell});done.push(`الأسعار: شراء ${fmt(a.buy)} وبيع ${fmt(a.sell)}`)}
+      else if(a.kind==='undo'){if(a.txId){const l=findTx(a.txId).t;S.shift&&(()=>{const i=S.shift.tx.findIndex(x=>x.id===a.txId);if(i<0)return;const t=S.shift.tx[i];
+        if(t.type==='settle'){const d=S.debts.find(x=>x.id===t.debtId);if(d){d.amount=r2(d.amount+t.egp);d.payments=(d.payments||[]).filter(p=>p.txId!==t.id);delete d.paidAt}}
+        if(t.type==='away'){const w=S.away.find(x=>x.id===t.awayId);if(w){if(t.dir==='out')S.away=S.away.filter(x=>x!==w);else{w.left=r2(w.left+t.amount);w.returns=w.returns.filter(r=>r.txId!==t.id);delete w.doneAt}}}
+        S.debts=S.debts.filter(d=>d.txId!==t.id);S.shift.tx.splice(i,1)})();done.push('اتلغت: '+txLabel(l))}}
+      a.done=true;
+    }catch(e){toast('حصلت مشكلة في: '+(a.raw||a.kind))}
+  }
+  save();vibrate();render();
+  if(!done.length)return;
+  say(done.length>1?`تمام، اتسجل ${done.length} حاجات`:'تمام، '+done[0]);
+  sheet('',`<div style="text-align:center"><div class="done-ic">${ic('check')}</div><h2 style="margin:0">${done.length>1?'اتسجل '+done.length+' حاجات':'اتسجلت'}</h2></div>
+    <div style="margin:14px 0">${done.map(x=>`<div class="kv"><span>✓</span><b>${esc(x)}</b></div>`).join('')}</div>
+    <button class="btn primary xl" onclick="voiceSheet()">${ic('mic')}قول حاجة تانية</button>
+    <button class="btn ghost xl" style="margin-top:10px" onclick="closeSheet()">تمام</button>
+    ${undo.tx.length||undo.away.length||undo.rate?`<button style="display:block;margin:12px auto 0;color:var(--bad);font-size:14px;text-decoration:underline" id="vUndo">غلط؟ الغي اللي اتسجل</button>`:''}`);
+  $('#vUndo')&&($('#vUndo').onclick=()=>{
+    for(const id of undo.tx.slice().reverse()){const i=S.shift?S.shift.tx.findIndex(t=>t.id===id):-1;if(i<0)continue;const t=S.shift.tx[i];
+      if(t.type==='settle'){const d=S.debts.find(x=>x.id===t.debtId);if(d){d.amount=r2(d.amount+t.egp);d.payments=(d.payments||[]).filter(p=>p.txId!==t.id);delete d.paidAt}}
+      if(t.type==='away'&&t.dir==='in'){const w=S.away.find(x=>x.id===t.awayId);if(w){w.left=r2(w.left+t.amount);w.returns=w.returns.filter(r=>r.txId!==t.id);delete w.doneAt}}
+      S.debts=S.debts.filter(d=>d.txId!==t.id);S.shift.tx.splice(i,1)}
+    S.away=S.away.filter(x=>!undo.away.includes(x.id));
+    if(undo.rate){S.settings.buy=undo.rate.buy;S.settings.sell=undo.rate.sell;S.rateLog.pop()}
+    save();render();closeSheet();toast('اتلغى');say('اتلغى')});
 }
 
 /* ===================================================== charts */
@@ -1249,7 +1474,7 @@ function render(){
     $('#shiftList').innerHTML=S.history.slice(0,60).map(h=>{const x=h.summary,bad=h.diff&&(h.diff.usd||h.diff.egp);return `<div class="row click" onclick="showReport('${h.id}')"><div class="av ${bad?'cash':'buy'}">${ic(bad?'alert':'check')}</div><div class="mid"><b>${dLong(h.openedAt)}</b><small>${tm(h.openedAt)} ← ${tm(h.closedAt)} · ${x.count} عملية${bad?` · <span class="neg">فرق ${U(h.diff.usd)} / ${E(h.diff.egp)}</span>`:''}</small></div><div class="end"><b class="n pos">${E(x.net)}</b><small>ربح</small></div></div>`}).join('')||`<div class="empty">${ic('chart')}لسه مفيش ورديات اتقفلت</div>`;
   }
   if(view==='set'){
-    const f=(id,v)=>{if(document.activeElement!==$(id))$(id).value=v};f('#sShop',st.shop);f('#sPhone',st.phone||'');f('#sLow',st.low||'');f('#sIdle',st.idle??2);notifLabel();
+    const f=(id,v)=>{if(document.activeElement!==$(id))$(id).value=v};f('#sShop',st.shop);f('#sPhone',st.phone||'');f('#sLow',st.low||'');f('#sIdle',st.idle??2);$$('#sWait .chip').forEach(b=>b.classList.toggle('on',+b.dataset.w===(st.voiceWait||5)));$('#sAuto').checked=!!st.voiceAuto;$('#sSpeak').checked=st.voiceSpeak!==false;notifLabel();
   }
 }
 
@@ -1258,6 +1483,10 @@ $('#sShop').oninput=e=>{S.settings.shop=e.target.value;save();render()};
 $('#sPhone').oninput=e=>{S.settings.phone=e.target.value;save()};
 $('#sLow').oninput=e=>{S.settings.low=num(e.target.value);save()};
 $('#sIdle').oninput=e=>{S.settings.idle=num(e.target.value);save()};
+$('#sWait').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.settings.voiceWait=+b.dataset.w;save();render()};
+$('#sAuto').onchange=e=>{S.settings.voiceAuto=e.target.checked;save()};
+$('#sSpeak').onchange=e=>{S.settings.voiceSpeak=e.target.checked;save();if(e.target.checked)say('تمام، هرد عليك بصوت')};
+$('#fabMic').onclick=()=>{if(LS)return stopListen();if($('#vMic'))return listen();voiceSheet()};
 $('#notifBtn').onclick=async()=>{if(!('Notification' in window))return toast('الجهاز ده مش بيدعم الإشعارات');if(Notification.permission==='denied')return toast('الإشعارات مقفولة — افتحها من إعدادات المتصفح');
   const r=await Notification.requestPermission();notifLabel();if(r==='granted'){toast('تمام — هتوصلك التنبيهات انت بس');notifyCheck()}};
 function setTheme(d){S.settings.dark=d;document.documentElement.dataset.theme=d?'dark':'';save()}
